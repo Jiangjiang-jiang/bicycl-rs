@@ -35,6 +35,8 @@ If `bicycl_capi` or its dependencies are not in the default linker search path, 
 `BICYCL_CAPI_LIB_DIR` and `BICYCL_DEP_LIB_DIR`. Library names and link kinds can also
 be overridden with `BICYCL_*_LIB_NAME` and `BICYCL_*_LINK_KIND`.
 
+Vendored upstream sources live in `bicycl-rs-sys/vendor/bicycl/`. To resync them from upstream, run `bash scripts/update-vendor.sh [repo] [ref]`. The currently tracked upstream revision is recorded in `bicycl-rs-sys/vendor/bicycl-upstream.toml`.
+
 ## License
 
 `GPL-3.0-or-later`.
