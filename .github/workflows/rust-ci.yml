@@ -173,4 +173,5 @@ jobs:
       - name: cargo package (sys)
         run: cargo package -p bicycl-rs-sys --list && cargo package -p bicycl-rs-sys
       - name: cargo package (safe)
-        run: cargo package -p bicycl-rs --list && cargo package -p bicycl-rs --no-verify
+        # full package impossible until bicycl-rs-sys is on crates.io; list-only verifies included files
+        run: cargo package -p bicycl-rs --list
