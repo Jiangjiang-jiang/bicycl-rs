@@ -3,6 +3,7 @@ name: rust-ci
 on:
   push:
     paths:
+      - 'Cargo.toml'
       - 'bicycl-rs/**'
       - 'bicycl-rs-sys/**'
       - 'scripts/**'
@@ -11,6 +12,7 @@ on:
       - '.github/workflows/rust-ci.yml'
   pull_request:
     paths:
+      - 'Cargo.toml'
       - 'bicycl-rs/**'
       - 'bicycl-rs-sys/**'
       - 'scripts/**'
@@ -27,10 +29,13 @@ jobs:
         include:
           - os: ubuntu-latest
             run_capi_smoke: true
+            run_doc_check: true
           - os: macos-latest
             run_capi_smoke: true
+            run_doc_check: false
           - os: windows-latest
             run_capi_smoke: false
+            run_doc_check: false
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -86,6 +91,9 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: msys2 {0}
         run: cargo test --workspace --target x86_64-pc-windows-gnu
+      - name: Rust doc
+        if: matrix.run_doc_check
+        run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace
 
   system-mode:
     runs-on: ${{ matrix.os }}
@@ -135,6 +143,18 @@ jobs:
           cmake --build build/capi-sanitize
           ctest --test-dir build/capi-sanitize --output-on-failure
 
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.82
+      - name: Install Linux deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
+      - name: Check MSRV
+        run: cargo check --workspace
+
   package-check:
     runs-on: ubuntu-latest
     steps:
@@ -144,11 +164,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
-      - name: package list (sys)
-        run: cargo package --allow-dirty -p bicycl-rs-sys --list
-      - name: package list (safe)
-        run: cargo package --allow-dirty -p bicycl-rs --list
       - name: cargo package (sys)
-        run: cargo package --allow-dirty -p bicycl-rs-sys
+        run: cargo package -p bicycl-rs-sys --list && cargo package -p bicycl-rs-sys
       - name: cargo package (safe)
-        run: cargo package --allow-dirty -p bicycl-rs
+        run: cargo package -p bicycl-rs --list && cargo package -p bicycl-rs
