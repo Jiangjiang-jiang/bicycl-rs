@@ -2,6 +2,7 @@
 name = "bicycl-rs"
 version = "0.1.0"
 edition = "2021"
+rust-version.workspace = true
 license = "GPL-3.0-or-later"
 description = "Safe Rust wrapper for BICYCL C API"
 repository = "https://github.com/Jiangjiang-jiang/bicycl-rs"

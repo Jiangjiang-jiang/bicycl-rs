@@ -2,6 +2,7 @@
 name = "bicycl-rs-sys"
 version = "0.1.0"
 edition = "2021"
+rust-version.workspace = true
 links = "bicycl_capi"
 license = "GPL-3.0-or-later"
 description = "Low-level Rust FFI bindings for BICYCL C API"
