@@ -135,96 +135,6 @@ pub fn zeroize(buf: &mut [u8]) {
     }
 }
 
-/// Runs the built-in two-party ECDSA self-test demo from the C library.
-///
-/// Returns `true` if the internal verification passes.  Intended for smoke
-/// testing; use [`TwoPartyEcdsaSession`] for production protocols.
-pub fn two_party_ecdsa_run_demo(
-    ctx: &mut Context,
-    rng: &mut RandGen,
-    seclevel_bits: u32,
-    msg: &[u8],
-) -> Result<bool> {
-    let mut out_valid: c_int = 0;
-    let status = unsafe {
-        bicycl_rs_sys::bicycl_two_party_ecdsa_run_demo(
-            ctx.raw.as_ptr(),
-            rng.raw.as_ptr(),
-            seclevel_bits,
-            msg.as_ptr(),
-            msg.len(),
-            &mut out_valid as *mut _,
-        )
-    };
-    status_to_result(status)?;
-    Ok(out_valid != 0)
-}
-
-/// A stateful session for the interactive two-party (2-of-2) ECDSA signing protocol.
-///
-/// Create via [`Context::two_party_ecdsa_session`].  The session must be driven
-/// through key-generation and signing rounds in strict order; calling rounds out
-/// of order returns [`Error::InvalidState`].
-#[derive(Debug)]
-pub struct TwoPartyEcdsaSession {
-    raw: NonNull<bicycl_rs_sys::bicycl_two_party_ecdsa_session_t>,
-}
-
-/// Runs the built-in CL threshold self-test demo from the C library.
-///
-/// Returns the result string produced by the demo (typically `"2"` for a
-/// successful 2-of-2 threshold reconstruction).
-pub fn cl_threshold_run_demo(ctx: &mut Context, rng: &mut RandGen) -> Result<String> {
-    ffi_string_from_len(|buf, len| unsafe {
-        bicycl_rs_sys::bicycl_cl_threshold_run_demo(ctx.raw.as_ptr(), rng.raw.as_ptr(), buf, len)
-    })
-}
-
-/// Runs the built-in CL DLog proof self-test demo from the C library.
-///
-/// Returns `true` if the internal proof verifies correctly.
-pub fn cl_dlog_proof_run_demo(
-    ctx: &mut Context,
-    rng: &mut RandGen,
-    seclevel_bits: u32,
-) -> Result<bool> {
-    let mut out_valid: c_int = 0;
-    let status = unsafe {
-        bicycl_rs_sys::bicycl_cl_dlog_proof_run_demo(
-            ctx.raw.as_ptr(),
-            rng.raw.as_ptr(),
-            seclevel_bits,
-            &mut out_valid as *mut _,
-        )
-    };
-    status_to_result(status)?;
-    Ok(out_valid != 0)
-}
-
-/// Runs the built-in threshold ECDSA self-test demo from the C library.
-///
-/// Returns `true` if the internal signing and verification pass.
-pub fn threshold_ecdsa_run_demo(
-    ctx: &mut Context,
-    rng: &mut RandGen,
-    seclevel_bits: u32,
-    msg: &[u8],
-) -> Result<bool> {
-    let mut out_valid: c_int = 0;
-    let status = unsafe {
-        bicycl_rs_sys::bicycl_threshold_ecdsa_run_demo(
-            ctx.raw.as_ptr(),
-            rng.raw.as_ptr(),
-            seclevel_bits,
-            msg.as_ptr(),
-            msg.len(),
-            &mut out_valid as *mut _,
-        )
-    };
-    status_to_result(status)?;
-    Ok(out_valid != 0)
-}
-
 /// The central BICYCL library context.
 ///
 /// All cryptographic objects and operations require a mutable reference to a
@@ -1401,6 +1311,16 @@ impl EcdsaSignature {
     }
 }
 
+/// A stateful session for the interactive two-party (2-of-2) ECDSA signing protocol.
+///
+/// Create via [`Context::two_party_ecdsa_session`].  The session must be driven
+/// through key-generation and signing rounds in strict order; calling rounds out
+/// of order returns [`Error::InvalidState`].
+#[derive(Debug)]
+pub struct TwoPartyEcdsaSession {
+    raw: NonNull<bicycl_rs_sys::bicycl_two_party_ecdsa_session_t>,
+}
+
 impl TwoPartyEcdsaSession {
     /// Executes key-generation round 1 (party contribution and commitment).
     pub fn keygen_round1(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
@@ -1857,4 +1777,84 @@ impl Drop for EcdsaSignature {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_ecdsa_sig_free(self.raw.as_ptr()) }
     }
+}
+
+/// Runs the built-in two-party ECDSA self-test demo from the C library.
+///
+/// Returns `true` if the internal verification passes.  Intended for smoke
+/// testing; use [`TwoPartyEcdsaSession`] for production protocols.
+pub fn two_party_ecdsa_run_demo(
+    ctx: &mut Context,
+    rng: &mut RandGen,
+    seclevel_bits: u32,
+    msg: &[u8],
+) -> Result<bool> {
+    let mut out_valid: c_int = 0;
+    let status = unsafe {
+        bicycl_rs_sys::bicycl_two_party_ecdsa_run_demo(
+            ctx.raw.as_ptr(),
+            rng.raw.as_ptr(),
+            seclevel_bits,
+            msg.as_ptr(),
+            msg.len(),
+            &mut out_valid as *mut _,
+        )
+    };
+    status_to_result(status)?;
+    Ok(out_valid != 0)
+}
+
+/// Runs the built-in CL threshold self-test demo from the C library.
+///
+/// Returns the result string produced by the demo (typically `"2"` for a
+/// successful 2-of-2 threshold reconstruction).
+pub fn cl_threshold_run_demo(ctx: &mut Context, rng: &mut RandGen) -> Result<String> {
+    ffi_string_from_len(|buf, len| unsafe {
+        bicycl_rs_sys::bicycl_cl_threshold_run_demo(ctx.raw.as_ptr(), rng.raw.as_ptr(), buf, len)
+    })
+}
+
+/// Runs the built-in CL DLog proof self-test demo from the C library.
+///
+/// Returns `true` if the internal proof verifies correctly.
+pub fn cl_dlog_proof_run_demo(
+    ctx: &mut Context,
+    rng: &mut RandGen,
+    seclevel_bits: u32,
+) -> Result<bool> {
+    let mut out_valid: c_int = 0;
+    let status = unsafe {
+        bicycl_rs_sys::bicycl_cl_dlog_proof_run_demo(
+            ctx.raw.as_ptr(),
+            rng.raw.as_ptr(),
+            seclevel_bits,
+            &mut out_valid as *mut _,
+        )
+    };
+    status_to_result(status)?;
+    Ok(out_valid != 0)
+}
+
+/// Runs the built-in threshold ECDSA self-test demo from the C library.
+///
+/// Returns `true` if the internal signing and verification pass.
+pub fn threshold_ecdsa_run_demo(
+    ctx: &mut Context,
+    rng: &mut RandGen,
+    seclevel_bits: u32,
+    msg: &[u8],
+) -> Result<bool> {
+    let mut out_valid: c_int = 0;
+    let status = unsafe {
+        bicycl_rs_sys::bicycl_threshold_ecdsa_run_demo(
+            ctx.raw.as_ptr(),
+            rng.raw.as_ptr(),
+            seclevel_bits,
+            msg.as_ptr(),
+            msg.len(),
+            &mut out_valid as *mut _,
+        )
+    };
+    status_to_result(status)?;
+    Ok(out_valid != 0)
 }

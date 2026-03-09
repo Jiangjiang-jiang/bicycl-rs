@@ -11,6 +11,9 @@ use thiserror::Error;
 #[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum Error {
+    /// The C function returned `BICYCL_OK` but the output pointer was null,
+    /// indicating an internal bug in the C library rather than a caller error.
+    /// The `&'static str` payload names the function that returned null.
     #[error("null pointer returned from FFI: {0}")]
     NullFromFfi(&'static str),
 
@@ -20,6 +23,9 @@ pub enum Error {
     #[error("UTF-8 error in FFI response")]
     Utf8(#[from] std::str::Utf8Error),
 
+    /// The C library returned `BICYCL_ERR_NULL_PTR`, meaning the **caller**
+    /// passed a null pointer into the C API.  This should not occur under
+    /// normal use of the safe Rust wrappers.
     #[error("BICYCL null pointer")]
     NullPtr,
 
