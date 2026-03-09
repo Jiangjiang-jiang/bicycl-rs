@@ -19,39 +19,108 @@ on:
       - '.github/workflows/rust-ci.yml'
 
 jobs:
-  test:
+  vendored:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        toolchain: [stable]
+        include:
+          - os: ubuntu-latest
+            shell: bash
+            run_capi_smoke: true
+            cargo_test_cmd: cargo test --workspace
+          - os: macos-latest
+            shell: bash
+            run_capi_smoke: true
+            cargo_test_cmd: cargo test --workspace
+          - os: windows-latest
+            shell: msys2 {0}
+            run_capi_smoke: false
+            cargo_test_cmd: cargo test --workspace --target x86_64-pc-windows-gnu
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
+      - name: Install macOS deps
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install cmake gmp openssl@3
+      - name: Install Windows deps
+        if: matrix.os == 'windows-latest'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-openssl
+      - name: Add Windows GNU target
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: rustup target add x86_64-pc-windows-gnu
       - name: C API smoke
+        if: matrix.run_capi_smoke
         run: |
           cmake -S bicycl-rs-sys/capi -B build/capi -DBUILD_TESTING=ON
           cmake --build build/capi
           ctest --test-dir build/capi --output-on-failure
+        shell: ${{ matrix.shell }}
       - name: Rust fmt
         run: cargo fmt --check
-        working-directory: .
+        shell: ${{ matrix.shell }}
       - name: Rust clippy
-        run: cargo clippy --all-targets -- -D warnings
-        working-directory: .
+        run: cargo clippy --workspace --all-targets -- -D warnings
+        shell: ${{ matrix.shell }}
       - name: Rust test
-        run: cargo test
-        working-directory: .
+        run: ${{ matrix.cargo_test_cmd }}
+        shell: ${{ matrix.shell }}
+
+  system-mode:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            shell: bash
+          - os: macos-latest
+            shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
+      - name: Install macOS deps
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install cmake gmp openssl@3
+      - name: Set macOS linker search paths
+        if: matrix.os == 'macos-latest'
+        run: |
+          echo "BICYCL_DEP_LIB_DIR=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
       - name: Rust test (system mode from local libs)
         run: bash scripts/test-system-mode.sh
-        working-directory: .
+        shell: ${{ matrix.shell }}
 
   sanitize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
       - name: C API smoke with ASan/UBSan/LSan
         env:
           ASAN_OPTIONS: detect_leaks=1:abort_on_error=1

@@ -12,6 +12,8 @@ set(BICYCL_SOURCE_DIR
 find_package(OpenSSL REQUIRED)
 find_library(GMP_LIBRARY gmp REQUIRED)
 find_library(GMPXX_LIBRARY gmpxx REQUIRED)
+find_path(GMP_INCLUDE_DIR gmp.h REQUIRED)
+find_path(GMPXX_INCLUDE_DIR gmpxx.h)
 
 add_library(bicycl_capi STATIC
   src/bicycl_capi.cpp
@@ -23,6 +25,8 @@ target_include_directories(bicycl_capi
     $<INSTALL_INTERFACE:include>
   PRIVATE
     ${BICYCL_SOURCE_DIR}/src
+    ${GMP_INCLUDE_DIR}
+    ${GMPXX_INCLUDE_DIR}
 )
 
 target_compile_features(bicycl_capi PUBLIC cxx_std_11)

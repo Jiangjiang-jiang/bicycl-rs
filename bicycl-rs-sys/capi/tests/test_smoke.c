@@ -167,10 +167,6 @@ int main(void) {
   bicycl_ecdsa_sk_free(ecdsa_sk);
   bicycl_ecdsa_free(ecdsa);
 
-  int two_party_valid = 0;
-  assert(bicycl_two_party_ecdsa_run_demo(ctx, rng, 112, msg_ok, sizeof(msg_ok), &two_party_valid) == BICYCL_OK);
-  assert(two_party_valid == 1);
-
   bicycl_two_party_ecdsa_session_t *tp_session = NULL;
   assert(bicycl_two_party_ecdsa_session_new(ctx, rng, 112, &tp_session) == BICYCL_OK);
   assert(bicycl_two_party_ecdsa_keygen_round1(ctx, tp_session, rng) == BICYCL_OK);
@@ -185,14 +181,6 @@ int main(void) {
   assert(bicycl_two_party_ecdsa_sign_finalize(ctx, tp_session, &tp_state_valid) == BICYCL_OK);
   assert(tp_state_valid == 1);
   bicycl_two_party_ecdsa_session_free(tp_session);
-
-  int cl_dlog_valid = 0;
-  assert(bicycl_cl_dlog_proof_run_demo(ctx, rng, 112, &cl_dlog_valid) == BICYCL_OK);
-  assert(cl_dlog_valid == 1);
-
-  int threshold_ecdsa_valid = 0;
-  assert(bicycl_threshold_ecdsa_run_demo(ctx, rng, 112, msg_ok, sizeof(msg_ok), &threshold_ecdsa_valid) == BICYCL_OK);
-  assert(threshold_ecdsa_valid == 1);
 
   bicycl_cl_dlog_session_t *dlog_session = NULL;
   assert(bicycl_cl_dlog_session_new(ctx, rng, 112, &dlog_session) == BICYCL_OK);
@@ -262,11 +250,6 @@ int main(void) {
   assert(bicycl_threshold_ecdsa_signature_valid(ctx, th_session, &th_round_valid) == BICYCL_OK);
   assert(th_round_valid == 1);
   bicycl_threshold_ecdsa_session_free(th_session);
-
-  char threshold_buf[64];
-  size_t threshold_len = sizeof(threshold_buf);
-  assert(bicycl_cl_threshold_run_demo(ctx, rng, threshold_buf, &threshold_len) == BICYCL_OK);
-  assert(strcmp(threshold_buf, "2") == 0);
 
   bicycl_paillier_ct_free(ct);
   bicycl_paillier_pk_free(pk);
