@@ -60,6 +60,7 @@ mod error;
 
 use core::ffi::{c_char, c_int, c_void};
 use std::ffi::{CStr, CString};
+use std::marker::PhantomData;
 use std::ptr::NonNull;
 
 pub use error::{Error, Result};
@@ -147,6 +148,7 @@ pub fn zeroize(buf: &mut [u8]) {
 #[derive(Debug)]
 pub struct Context {
     raw: NonNull<bicycl_rs_sys::bicycl_context_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl Context {
@@ -160,7 +162,7 @@ impl Context {
         let status = unsafe { bicycl_rs_sys::bicycl_context_new(&mut raw as *mut _) };
         status_to_result(status)?;
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_context_new"))?;
-        Ok(Self { raw })
+        Ok(Self { raw, _marker: PhantomData })
     }
 
     /// Returns the last error message stored by the C library, or `""` if none.
@@ -197,7 +199,7 @@ impl Context {
         status_to_result(status)?;
         let raw =
             NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_randgen_new_from_seed_decimal"))?;
-        Ok(RandGen { raw })
+        Ok(RandGen { raw, _marker: PhantomData })
     }
 
     /// Creates a class group from a negative fundamental discriminant given as a decimal string.
@@ -220,7 +222,7 @@ impl Context {
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi(
             "bicycl_classgroup_new_from_discriminant_decimal",
         ))?;
-        Ok(ClassGroup { raw })
+        Ok(ClassGroup { raw, _marker: PhantomData })
     }
 
     /// Creates a Paillier cryptosystem instance with the given RSA modulus bit length.
@@ -233,7 +235,7 @@ impl Context {
         };
         status_to_result(status)?;
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_paillier_new"))?;
-        Ok(Paillier { raw })
+        Ok(Paillier { raw, _marker: PhantomData })
     }
 
     /// Creates a Joye-Libert cryptosystem instance.
@@ -252,7 +254,7 @@ impl Context {
         };
         status_to_result(status)?;
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_joye_libert_new"))?;
-        Ok(JoyeLibert { raw })
+        Ok(JoyeLibert { raw, _marker: PhantomData })
     }
 
     /// Creates a CL_HSMqk instance.
@@ -275,7 +277,7 @@ impl Context {
         };
         status_to_result(status)?;
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_new"))?;
-        Ok(ClHsmqk { raw })
+        Ok(ClHsmqk { raw, _marker: PhantomData })
     }
 
     /// Creates a CL_HSM2k instance.
@@ -295,7 +297,7 @@ impl Context {
         };
         status_to_result(status)?;
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_new"))?;
-        Ok(ClHsm2k { raw })
+        Ok(ClHsm2k { raw, _marker: PhantomData })
     }
 
     /// Creates an ECDSA instance at the given security level.
@@ -308,7 +310,7 @@ impl Context {
         };
         status_to_result(status)?;
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_ecdsa_new"))?;
-        Ok(Ecdsa { raw })
+        Ok(Ecdsa { raw, _marker: PhantomData })
     }
 
     /// Creates a new two-party ECDSA session at the given security level.
@@ -332,7 +334,7 @@ impl Context {
         status_to_result(status)?;
         let raw =
             NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_two_party_ecdsa_session_new"))?;
-        Ok(TwoPartyEcdsaSession { raw })
+        Ok(TwoPartyEcdsaSession { raw, _marker: PhantomData })
     }
 
     /// Creates a new CL DLog proof session at the given security level.
@@ -356,7 +358,7 @@ impl Context {
         };
         status_to_result(status)?;
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_cl_dlog_session_new"))?;
-        Ok(ClDlogSession { raw })
+        Ok(ClDlogSession { raw, _marker: PhantomData })
     }
 
     /// Creates a new threshold ECDSA session.
@@ -385,7 +387,7 @@ impl Context {
         status_to_result(status)?;
         let raw =
             NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_threshold_ecdsa_session_new"))?;
-        Ok(ThresholdEcdsaSession { raw })
+        Ok(ThresholdEcdsaSession { raw, _marker: PhantomData })
     }
 }
 
@@ -401,6 +403,7 @@ impl Drop for Context {
 #[derive(Debug)]
 pub struct RandGen {
     raw: NonNull<bicycl_rs_sys::bicycl_randgen_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl Drop for RandGen {
@@ -415,6 +418,7 @@ impl Drop for RandGen {
 #[derive(Debug)]
 pub struct ClassGroup {
     raw: NonNull<bicycl_rs_sys::bicycl_classgroup_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl ClassGroup {
@@ -430,7 +434,7 @@ impl ClassGroup {
         };
         status_to_result(status)?;
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_classgroup_one"))?;
-        Ok(Qfi { raw })
+        Ok(Qfi { raw, _marker: PhantomData })
     }
 
     /// Computes the NUDUPL squaring of a QFI element (i.e., `input² = input ∘ input`).
@@ -446,7 +450,7 @@ impl ClassGroup {
         };
         status_to_result(status)?;
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_classgroup_nudupl"))?;
-        Ok(Qfi { raw })
+        Ok(Qfi { raw, _marker: PhantomData })
     }
 }
 
@@ -462,6 +466,7 @@ impl Drop for ClassGroup {
 #[derive(Debug)]
 pub struct Qfi {
     raw: NonNull<bicycl_rs_sys::bicycl_qfi_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl Qfi {
@@ -504,24 +509,28 @@ impl Drop for Qfi {
 #[derive(Debug)]
 pub struct Paillier {
     raw: NonNull<bicycl_rs_sys::bicycl_paillier_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A Paillier secret key.  Keep this private.
 #[derive(Debug)]
 pub struct PaillierSecretKey {
     raw: NonNull<bicycl_rs_sys::bicycl_paillier_sk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A Paillier public key.  Safe to share.
 #[derive(Debug)]
 pub struct PaillierPublicKey {
     raw: NonNull<bicycl_rs_sys::bicycl_paillier_pk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A Paillier ciphertext.
 #[derive(Debug)]
 pub struct PaillierCipherText {
     raw: NonNull<bicycl_rs_sys::bicycl_paillier_ct_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl Paillier {
@@ -548,9 +557,11 @@ impl Paillier {
 
         let sk = PaillierSecretKey {
             raw: NonNull::new(sk_raw).ok_or(Error::NullFromFfi("bicycl_paillier_keygen/sk"))?,
+            _marker: PhantomData,
         };
         let pk = PaillierPublicKey {
             raw: NonNull::new(pk_raw).ok_or(Error::NullFromFfi("bicycl_paillier_keygen/pk"))?,
+            _marker: PhantomData,
         };
         Ok((sk, pk))
     }
@@ -580,7 +591,7 @@ impl Paillier {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_paillier_encrypt_decimal"))?;
-        Ok(PaillierCipherText { raw })
+        Ok(PaillierCipherText { raw, _marker: PhantomData })
     }
 
     /// Decrypts a ciphertext, returning the plaintext as a decimal string.
@@ -635,24 +646,28 @@ impl Drop for PaillierCipherText {
 #[derive(Debug)]
 pub struct JoyeLibert {
     raw: NonNull<bicycl_rs_sys::bicycl_joye_libert_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A Joye-Libert secret key.  Keep this private.
 #[derive(Debug)]
 pub struct JoyeLibertSecretKey {
     raw: NonNull<bicycl_rs_sys::bicycl_joye_libert_sk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A Joye-Libert public key.  Safe to share.
 #[derive(Debug)]
 pub struct JoyeLibertPublicKey {
     raw: NonNull<bicycl_rs_sys::bicycl_joye_libert_pk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A Joye-Libert ciphertext.
 #[derive(Debug)]
 pub struct JoyeLibertCipherText {
     raw: NonNull<bicycl_rs_sys::bicycl_joye_libert_ct_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl JoyeLibert {
@@ -677,9 +692,11 @@ impl JoyeLibert {
 
         let sk = JoyeLibertSecretKey {
             raw: NonNull::new(sk_raw).ok_or(Error::NullFromFfi("bicycl_joye_libert_keygen/sk"))?,
+            _marker: PhantomData,
         };
         let pk = JoyeLibertPublicKey {
             raw: NonNull::new(pk_raw).ok_or(Error::NullFromFfi("bicycl_joye_libert_keygen/pk"))?,
+            _marker: PhantomData,
         };
         Ok((sk, pk))
     }
@@ -709,7 +726,7 @@ impl JoyeLibert {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_joye_libert_encrypt_decimal"))?;
-        Ok(JoyeLibertCipherText { raw })
+        Ok(JoyeLibertCipherText { raw, _marker: PhantomData })
     }
 
     /// Decrypts a ciphertext, returning the plaintext as a decimal string.
@@ -762,24 +779,28 @@ impl Drop for JoyeLibertCipherText {
 #[derive(Debug)]
 pub struct ClHsmqk {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_hsmqk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A CL_HSMqk secret key.  Keep this private.
 #[derive(Debug)]
 pub struct ClHsmqkSecretKey {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_hsmqk_sk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A CL_HSMqk public key.  Safe to share.
 #[derive(Debug)]
 pub struct ClHsmqkPublicKey {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_hsmqk_pk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A CL_HSMqk ciphertext.
 #[derive(Debug)]
 pub struct ClHsmqkCipherText {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_hsmqk_ct_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl ClHsmqk {
@@ -804,9 +825,11 @@ impl ClHsmqk {
 
         let sk = ClHsmqkSecretKey {
             raw: NonNull::new(sk_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_keygen/sk"))?,
+            _marker: PhantomData,
         };
         let pk = ClHsmqkPublicKey {
             raw: NonNull::new(pk_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_keygen/pk"))?,
+            _marker: PhantomData,
         };
         Ok((sk, pk))
     }
@@ -834,7 +857,7 @@ impl ClHsmqk {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_encrypt_decimal"))?;
-        Ok(ClHsmqkCipherText { raw })
+        Ok(ClHsmqkCipherText { raw, _marker: PhantomData })
     }
 
     /// Decrypts a CL_HSMqk ciphertext, returning the plaintext as a decimal string.
@@ -880,7 +903,7 @@ impl ClHsmqk {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_add_ciphertexts"))?;
-        Ok(ClHsmqkCipherText { raw })
+        Ok(ClHsmqkCipherText { raw, _marker: PhantomData })
     }
 
     /// Homomorphically multiplies a ciphertext by a scalar: `Enc(m) * s = Enc(m*s mod q^k)`.
@@ -911,7 +934,7 @@ impl ClHsmqk {
         let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
             "bicycl_cl_hsmqk_scal_ciphertext_decimal",
         ))?;
-        Ok(ClHsmqkCipherText { raw })
+        Ok(ClHsmqkCipherText { raw, _marker: PhantomData })
     }
 
     /// Combined add-then-scalar-multiply: `Enc(a + b*s mod q^k)`.
@@ -945,7 +968,7 @@ impl ClHsmqk {
         let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
             "bicycl_cl_hsmqk_addscal_ciphertexts_decimal",
         ))?;
-        Ok(ClHsmqkCipherText { raw })
+        Ok(ClHsmqkCipherText { raw, _marker: PhantomData })
     }
 }
 
@@ -979,24 +1002,28 @@ impl Drop for ClHsmqkCipherText {
 #[derive(Debug)]
 pub struct ClHsm2k {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_hsm2k_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A CL_HSM2k secret key.  Keep this private.
 #[derive(Debug)]
 pub struct ClHsm2kSecretKey {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_hsm2k_sk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A CL_HSM2k public key.  Safe to share.
 #[derive(Debug)]
 pub struct ClHsm2kPublicKey {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_hsm2k_pk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A CL_HSM2k ciphertext.
 #[derive(Debug)]
 pub struct ClHsm2kCipherText {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_hsm2k_ct_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl ClHsm2k {
@@ -1021,9 +1048,11 @@ impl ClHsm2k {
 
         let sk = ClHsm2kSecretKey {
             raw: NonNull::new(sk_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_keygen/sk"))?,
+            _marker: PhantomData,
         };
         let pk = ClHsm2kPublicKey {
             raw: NonNull::new(pk_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_keygen/pk"))?,
+            _marker: PhantomData,
         };
         Ok((sk, pk))
     }
@@ -1051,7 +1080,7 @@ impl ClHsm2k {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_encrypt_decimal"))?;
-        Ok(ClHsm2kCipherText { raw })
+        Ok(ClHsm2kCipherText { raw, _marker: PhantomData })
     }
 
     /// Decrypts a CL_HSM2k ciphertext, returning the plaintext as a decimal string.
@@ -1097,7 +1126,7 @@ impl ClHsm2k {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_add_ciphertexts"))?;
-        Ok(ClHsm2kCipherText { raw })
+        Ok(ClHsm2kCipherText { raw, _marker: PhantomData })
     }
 
     /// Homomorphically multiplies a ciphertext by a scalar: `Enc(m) * s = Enc(m*s mod 2^k)`.
@@ -1126,7 +1155,7 @@ impl ClHsm2k {
         let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
             "bicycl_cl_hsm2k_scal_ciphertext_decimal",
         ))?;
-        Ok(ClHsm2kCipherText { raw })
+        Ok(ClHsm2kCipherText { raw, _marker: PhantomData })
     }
 
     /// Combined add-then-scalar-multiply: `Enc(a + b*s mod 2^k)`.
@@ -1157,7 +1186,7 @@ impl ClHsm2k {
         let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
             "bicycl_cl_hsm2k_addscal_ciphertexts_decimal",
         ))?;
-        Ok(ClHsm2kCipherText { raw })
+        Ok(ClHsm2kCipherText { raw, _marker: PhantomData })
     }
 }
 
@@ -1191,24 +1220,28 @@ impl Drop for ClHsm2kCipherText {
 #[derive(Debug)]
 pub struct Ecdsa {
     raw: NonNull<bicycl_rs_sys::bicycl_ecdsa_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// An ECDSA secret (signing) key.  Keep this private.
 #[derive(Debug)]
 pub struct EcdsaSecretKey {
     raw: NonNull<bicycl_rs_sys::bicycl_ecdsa_sk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// An ECDSA public (verification) key.  Safe to share.
 #[derive(Debug)]
 pub struct EcdsaPublicKey {
     raw: NonNull<bicycl_rs_sys::bicycl_ecdsa_pk_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// An ECDSA signature `(r, s)`.
 #[derive(Debug)]
 pub struct EcdsaSignature {
     raw: NonNull<bicycl_rs_sys::bicycl_ecdsa_sig_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl Ecdsa {
@@ -1232,9 +1265,11 @@ impl Ecdsa {
         status_to_result(status)?;
         let sk = EcdsaSecretKey {
             raw: NonNull::new(sk_raw).ok_or(Error::NullFromFfi("bicycl_ecdsa_keygen/sk"))?,
+            _marker: PhantomData,
         };
         let pk = EcdsaPublicKey {
             raw: NonNull::new(pk_raw).ok_or(Error::NullFromFfi("bicycl_ecdsa_keygen/pk"))?,
+            _marker: PhantomData,
         };
         Ok((sk, pk))
     }
@@ -1263,7 +1298,7 @@ impl Ecdsa {
         };
         status_to_result(status)?;
         let raw = NonNull::new(sig_raw).ok_or(Error::NullFromFfi("bicycl_ecdsa_sign_message"))?;
-        Ok(EcdsaSignature { raw })
+        Ok(EcdsaSignature { raw, _marker: PhantomData })
     }
 
     /// Verifies a signature against a message and public key.
@@ -1319,6 +1354,7 @@ impl EcdsaSignature {
 #[derive(Debug)]
 pub struct TwoPartyEcdsaSession {
     raw: NonNull<bicycl_rs_sys::bicycl_two_party_ecdsa_session_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl TwoPartyEcdsaSession {
@@ -1444,6 +1480,7 @@ impl Drop for TwoPartyEcdsaSession {
 #[derive(Debug)]
 pub struct ClDlogSession {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_dlog_session_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 /// A serializable message container used to exchange statements and proofs
@@ -1454,6 +1491,7 @@ pub struct ClDlogSession {
 #[derive(Debug)]
 pub struct ClDlogMessage {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_dlog_message_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl ClDlogSession {
@@ -1557,7 +1595,7 @@ impl ClDlogMessage {
         let status = unsafe { bicycl_rs_sys::bicycl_cl_dlog_message_new(&mut raw as *mut _) };
         status_to_result(status)?;
         let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_cl_dlog_message_new"))?;
-        Ok(Self { raw })
+        Ok(Self { raw, _marker: PhantomData })
     }
 
     /// Serializes the message to bytes for transmission.
@@ -1600,6 +1638,7 @@ impl Drop for ClDlogMessage {
 #[derive(Debug)]
 pub struct ThresholdEcdsaSession {
     raw: NonNull<bicycl_rs_sys::bicycl_threshold_ecdsa_session_t>,
+    _marker: PhantomData<*mut ()>,
 }
 
 impl ThresholdEcdsaSession {

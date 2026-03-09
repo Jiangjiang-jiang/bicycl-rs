@@ -10,7 +10,7 @@ edition = "2021"
 rust-version = "1.82"
 authors = ["qsang <qsangxin@gmail.com>"]
 license = "GPL-3.0-or-later"
-repository = "https://github.com/qsang/bicycl-rs"
+repository = "https://github.com/Jiangjiang-jiang/bicycl-rs"
 
 [workspace.lints.rust]
 unsafe_op_in_unsafe_fn = "deny"
