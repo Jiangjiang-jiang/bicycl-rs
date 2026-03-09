@@ -23,6 +23,7 @@ include = [
   "vendor/bicycl/src/**",
   "vendor/bicycl/LICENSE",
   "vendor/bicycl/AUTHORS",
+  "vendor/bicycl-upstream.toml",
 ]
 
 [features]
