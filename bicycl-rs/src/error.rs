@@ -8,6 +8,7 @@ use thiserror::Error;
 /// - **C library status codes** (all other variants): direct mappings of the
 ///   `bicycl_status_t` enum returned by the C API.
 /// - **`Unknown`**: a status code not recognised by this version of the crate.
+#[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("null pointer returned from FFI: {0}")]
