@@ -570,7 +570,7 @@ pub struct PaillierPublicKey {
 
 /// A Paillier ciphertext.
 #[derive(Debug)]
-pub struct PaillierCipherText {
+pub struct PaillierCiphertext {
     raw: NonNull<bicycl_rs_sys::bicycl_paillier_ct_t>,
     _marker: PhantomData<*mut ()>,
 }
@@ -617,7 +617,7 @@ impl Paillier {
         pk: &PaillierPublicKey,
         rng: &mut RandGen,
         message_decimal: &str,
-    ) -> Result<PaillierCipherText> {
+    ) -> Result<PaillierCiphertext> {
         let message_c = CString::new(message_decimal)?;
         let mut ct_raw = std::ptr::null_mut();
         let status = unsafe {
@@ -633,19 +633,23 @@ impl Paillier {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_paillier_encrypt_decimal"))?;
-        Ok(PaillierCipherText {
+        Ok(PaillierCiphertext {
             raw,
             _marker: PhantomData,
         })
     }
 
     /// Decrypts a ciphertext, returning the plaintext as a decimal string.
+    ///
+    /// Unlike the Joye-Libert and CL variants, Paillier decryption requires both
+    /// `pk` and `sk` because the underlying C API uses the public key's modulus
+    /// during the decryption computation.
     pub fn decrypt_decimal(
         &self,
         ctx: &mut Context,
         pk: &PaillierPublicKey,
         sk: &PaillierSecretKey,
-        ct: &PaillierCipherText,
+        ct: &PaillierCiphertext,
     ) -> Result<String> {
         ffi_string_from_len(|buf, len| unsafe {
             bicycl_rs_sys::bicycl_paillier_decrypt_decimal(
@@ -679,7 +683,7 @@ impl Drop for PaillierPublicKey {
     }
 }
 
-impl Drop for PaillierCipherText {
+impl Drop for PaillierCiphertext {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_paillier_ct_free(self.raw.as_ptr()) }
     }
@@ -710,7 +714,7 @@ pub struct JoyeLibertPublicKey {
 
 /// A Joye-Libert ciphertext.
 #[derive(Debug)]
-pub struct JoyeLibertCipherText {
+pub struct JoyeLibertCiphertext {
     raw: NonNull<bicycl_rs_sys::bicycl_joye_libert_ct_t>,
     _marker: PhantomData<*mut ()>,
 }
@@ -755,7 +759,7 @@ impl JoyeLibert {
         pk: &JoyeLibertPublicKey,
         rng: &mut RandGen,
         message_decimal: &str,
-    ) -> Result<JoyeLibertCipherText> {
+    ) -> Result<JoyeLibertCiphertext> {
         let message_c = CString::new(message_decimal)?;
         let mut ct_raw = std::ptr::null_mut();
         let status = unsafe {
@@ -771,7 +775,7 @@ impl JoyeLibert {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_joye_libert_encrypt_decimal"))?;
-        Ok(JoyeLibertCipherText {
+        Ok(JoyeLibertCiphertext {
             raw,
             _marker: PhantomData,
         })
@@ -782,7 +786,7 @@ impl JoyeLibert {
         &self,
         ctx: &mut Context,
         sk: &JoyeLibertSecretKey,
-        ct: &JoyeLibertCipherText,
+        ct: &JoyeLibertCiphertext,
     ) -> Result<String> {
         ffi_string_from_len(|buf, len| unsafe {
             bicycl_rs_sys::bicycl_joye_libert_decrypt_decimal(
@@ -815,7 +819,7 @@ impl Drop for JoyeLibertPublicKey {
     }
 }
 
-impl Drop for JoyeLibertCipherText {
+impl Drop for JoyeLibertCiphertext {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_joye_libert_ct_free(self.raw.as_ptr()) }
     }
@@ -846,7 +850,7 @@ pub struct ClHsmqkPublicKey {
 
 /// A CL_HSMqk ciphertext.
 #[derive(Debug)]
-pub struct ClHsmqkCipherText {
+pub struct ClHsmqkCiphertext {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_hsmqk_ct_t>,
     _marker: PhantomData<*mut ()>,
 }
@@ -889,7 +893,7 @@ impl ClHsmqk {
         pk: &ClHsmqkPublicKey,
         rng: &mut RandGen,
         message_decimal: &str,
-    ) -> Result<ClHsmqkCipherText> {
+    ) -> Result<ClHsmqkCiphertext> {
         let message_c = CString::new(message_decimal)?;
         let mut ct_raw = std::ptr::null_mut();
         let status = unsafe {
@@ -905,7 +909,7 @@ impl ClHsmqk {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_encrypt_decimal"))?;
-        Ok(ClHsmqkCipherText {
+        Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
         })
@@ -916,7 +920,7 @@ impl ClHsmqk {
         &self,
         ctx: &mut Context,
         sk: &ClHsmqkSecretKey,
-        ct: &ClHsmqkCipherText,
+        ct: &ClHsmqkCiphertext,
     ) -> Result<String> {
         ffi_string_from_len(|buf, len| unsafe {
             bicycl_rs_sys::bicycl_cl_hsmqk_decrypt_decimal(
@@ -936,9 +940,9 @@ impl ClHsmqk {
         ctx: &mut Context,
         pk: &ClHsmqkPublicKey,
         rng: &mut RandGen,
-        ca: &ClHsmqkCipherText,
-        cb: &ClHsmqkCipherText,
-    ) -> Result<ClHsmqkCipherText> {
+        ca: &ClHsmqkCiphertext,
+        cb: &ClHsmqkCiphertext,
+    ) -> Result<ClHsmqkCiphertext> {
         let mut ct_raw = std::ptr::null_mut();
         let status = unsafe {
             bicycl_rs_sys::bicycl_cl_hsmqk_add_ciphertexts(
@@ -954,7 +958,7 @@ impl ClHsmqk {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_add_ciphertexts"))?;
-        Ok(ClHsmqkCipherText {
+        Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
         })
@@ -968,9 +972,9 @@ impl ClHsmqk {
         ctx: &mut Context,
         pk: &ClHsmqkPublicKey,
         rng: &mut RandGen,
-        ct: &ClHsmqkCipherText,
+        ct: &ClHsmqkCiphertext,
         scalar_decimal: &str,
-    ) -> Result<ClHsmqkCipherText> {
+    ) -> Result<ClHsmqkCiphertext> {
         let scalar_c = CString::new(scalar_decimal)?;
         let mut out_raw = std::ptr::null_mut();
         let status = unsafe {
@@ -988,25 +992,26 @@ impl ClHsmqk {
         let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
             "bicycl_cl_hsmqk_scal_ciphertext_decimal",
         ))?;
-        Ok(ClHsmqkCipherText {
+        Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
         })
     }
 
-    /// Combined add-then-scalar-multiply: `Enc(a + b*s mod q^k)`.
+    /// Computes `Enc(a + b*s mod q^k)`: adds ciphertext `ca` to a scalar multiple of `cb`.
     ///
-    /// Equivalent to `add_ciphertexts` followed by `scal_ciphertext_decimal` but
-    /// in a single C call.  `scalar_decimal` is the scalar as a decimal string.
+    /// Specifically, multiplies `cb` by `scalar_decimal` and adds the result to `ca`,
+    /// equivalent to `scal_ciphertext_decimal(cb, s)` then `add_ciphertexts(ca, scaled_cb)`
+    /// but in a single C call.  `scalar_decimal` is the scalar as a decimal string.
     pub fn addscal_ciphertexts_decimal(
         &self,
         ctx: &mut Context,
         pk: &ClHsmqkPublicKey,
         rng: &mut RandGen,
-        ca: &ClHsmqkCipherText,
-        cb: &ClHsmqkCipherText,
+        ca: &ClHsmqkCiphertext,
+        cb: &ClHsmqkCiphertext,
         scalar_decimal: &str,
-    ) -> Result<ClHsmqkCipherText> {
+    ) -> Result<ClHsmqkCiphertext> {
         let scalar_c = CString::new(scalar_decimal)?;
         let mut out_raw = std::ptr::null_mut();
         let status = unsafe {
@@ -1025,7 +1030,7 @@ impl ClHsmqk {
         let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
             "bicycl_cl_hsmqk_addscal_ciphertexts_decimal",
         ))?;
-        Ok(ClHsmqkCipherText {
+        Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
         })
@@ -1050,7 +1055,7 @@ impl Drop for ClHsmqkPublicKey {
     }
 }
 
-impl Drop for ClHsmqkCipherText {
+impl Drop for ClHsmqkCiphertext {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_cl_hsmqk_ct_free(self.raw.as_ptr()) }
     }
@@ -1081,7 +1086,7 @@ pub struct ClHsm2kPublicKey {
 
 /// A CL_HSM2k ciphertext.
 #[derive(Debug)]
-pub struct ClHsm2kCipherText {
+pub struct ClHsm2kCiphertext {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_hsm2k_ct_t>,
     _marker: PhantomData<*mut ()>,
 }
@@ -1124,7 +1129,7 @@ impl ClHsm2k {
         pk: &ClHsm2kPublicKey,
         rng: &mut RandGen,
         message_decimal: &str,
-    ) -> Result<ClHsm2kCipherText> {
+    ) -> Result<ClHsm2kCiphertext> {
         let message_c = CString::new(message_decimal)?;
         let mut ct_raw = std::ptr::null_mut();
         let status = unsafe {
@@ -1140,7 +1145,7 @@ impl ClHsm2k {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_encrypt_decimal"))?;
-        Ok(ClHsm2kCipherText {
+        Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
         })
@@ -1151,7 +1156,7 @@ impl ClHsm2k {
         &self,
         ctx: &mut Context,
         sk: &ClHsm2kSecretKey,
-        ct: &ClHsm2kCipherText,
+        ct: &ClHsm2kCiphertext,
     ) -> Result<String> {
         ffi_string_from_len(|buf, len| unsafe {
             bicycl_rs_sys::bicycl_cl_hsm2k_decrypt_decimal(
@@ -1171,9 +1176,9 @@ impl ClHsm2k {
         ctx: &mut Context,
         pk: &ClHsm2kPublicKey,
         rng: &mut RandGen,
-        ca: &ClHsm2kCipherText,
-        cb: &ClHsm2kCipherText,
-    ) -> Result<ClHsm2kCipherText> {
+        ca: &ClHsm2kCiphertext,
+        cb: &ClHsm2kCiphertext,
+    ) -> Result<ClHsm2kCiphertext> {
         let mut ct_raw = std::ptr::null_mut();
         let status = unsafe {
             bicycl_rs_sys::bicycl_cl_hsm2k_add_ciphertexts(
@@ -1189,7 +1194,7 @@ impl ClHsm2k {
         status_to_result(status)?;
         let raw =
             NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_add_ciphertexts"))?;
-        Ok(ClHsm2kCipherText {
+        Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
         })
@@ -1201,9 +1206,9 @@ impl ClHsm2k {
         ctx: &mut Context,
         pk: &ClHsm2kPublicKey,
         rng: &mut RandGen,
-        ct: &ClHsm2kCipherText,
+        ct: &ClHsm2kCiphertext,
         scalar_decimal: &str,
-    ) -> Result<ClHsm2kCipherText> {
+    ) -> Result<ClHsm2kCiphertext> {
         let scalar_c = CString::new(scalar_decimal)?;
         let mut out_raw = std::ptr::null_mut();
         let status = unsafe {
@@ -1221,22 +1226,26 @@ impl ClHsm2k {
         let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
             "bicycl_cl_hsm2k_scal_ciphertext_decimal",
         ))?;
-        Ok(ClHsm2kCipherText {
+        Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
         })
     }
 
-    /// Combined add-then-scalar-multiply: `Enc(a + b*s mod 2^k)`.
+    /// Computes `Enc(a + b*s mod 2^k)`: adds ciphertext `ca` to a scalar multiple of `cb`.
+    ///
+    /// Specifically, multiplies `cb` by `scalar_decimal` and adds the result to `ca`,
+    /// equivalent to `scal_ciphertext_decimal(cb, s)` then `add_ciphertexts(ca, scaled_cb)`
+    /// but in a single C call.  `scalar_decimal` is the scalar as a decimal string.
     pub fn addscal_ciphertexts_decimal(
         &self,
         ctx: &mut Context,
         pk: &ClHsm2kPublicKey,
         rng: &mut RandGen,
-        ca: &ClHsm2kCipherText,
-        cb: &ClHsm2kCipherText,
+        ca: &ClHsm2kCiphertext,
+        cb: &ClHsm2kCiphertext,
         scalar_decimal: &str,
-    ) -> Result<ClHsm2kCipherText> {
+    ) -> Result<ClHsm2kCiphertext> {
         let scalar_c = CString::new(scalar_decimal)?;
         let mut out_raw = std::ptr::null_mut();
         let status = unsafe {
@@ -1255,7 +1264,7 @@ impl ClHsm2k {
         let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
             "bicycl_cl_hsm2k_addscal_ciphertexts_decimal",
         ))?;
-        Ok(ClHsm2kCipherText {
+        Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
         })
@@ -1280,7 +1289,7 @@ impl Drop for ClHsm2kPublicKey {
     }
 }
 
-impl Drop for ClHsm2kCipherText {
+impl Drop for ClHsm2kCiphertext {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_cl_hsm2k_ct_free(self.raw.as_ptr()) }
     }
@@ -1562,7 +1571,7 @@ pub struct ClDlogSession {
 /// between prover and verifier in the CL DLog protocol.
 ///
 /// Create with [`ClDlogMessage::new`] and serialise/deserialise with
-/// [`to_bytes`][Self::to_bytes] / [`from_bytes`][Self::from_bytes].
+/// [`to_bytes`][Self::to_bytes] / [`load_bytes`][Self::load_bytes].
 #[derive(Debug)]
 pub struct ClDlogMessage {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_dlog_message_t>,
@@ -1689,7 +1698,7 @@ impl ClDlogMessage {
     }
 
     /// Deserializes bytes into this message container (overwrites any previous content).
-    pub fn from_bytes(&mut self, ctx: &mut Context, bytes: &[u8]) -> Result<()> {
+    pub fn load_bytes(&mut self, ctx: &mut Context, bytes: &[u8]) -> Result<()> {
         let status = unsafe {
             bicycl_rs_sys::bicycl_cl_dlog_message_import_bytes(
                 ctx.raw.as_ptr(),
