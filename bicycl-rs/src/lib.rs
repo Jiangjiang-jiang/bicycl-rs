@@ -139,12 +139,15 @@ pub fn zeroize(buf: &mut [u8]) {
 /// The central BICYCL library context.
 ///
 /// All cryptographic objects and operations require a mutable reference to a
-/// `Context`.  The context holds internal state used by the C library (e.g.,
-/// error messages) and is therefore `!Send + !Sync`.
+/// `Context`.  The context acts as an error sink: it stores the last error
+/// message produced by the C library and is passed to every operation so the
+/// library has somewhere to record diagnostic information.
 ///
-/// Drop the `Context` last — all derived objects (`RandGen`, ciphertext
-/// handles, etc.) must be dropped before the context is freed to avoid
-/// use-after-free inside the C library.
+/// All derived objects (`RandGen`, scheme instances, keys, ciphertexts, etc.)
+/// own their data independently and do **not** hold pointers into the context's
+/// memory, so their drop order relative to `Context` does not affect memory
+/// safety.  `Context` is `!Send + !Sync` because the underlying C library is
+/// not thread-safe; all objects must be used from a single thread.
 #[derive(Debug)]
 pub struct Context {
     raw: NonNull<bicycl_rs_sys::bicycl_context_t>,
