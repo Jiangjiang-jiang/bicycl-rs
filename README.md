@@ -1,23 +1,11 @@
 # bicycl-rs
 
-Rust bindings for upstream BICYCL.
-
-This repository contains:
+Rust bindings for [upstream BICYCL](https://gite.lirmm.fr/crypto/bicycl).
 
 - `bicycl-rs-sys`: low-level FFI bindings to the BICYCL C API
 - `bicycl-rs`: safe Rust wrapper built on top of `bicycl-rs-sys`
 
-## Repository Layout
-
-```text
-.
-├── bicycl-rs-sys/
-├── bicycl-rs/
-├── scripts/
-└── .github/workflows/
-```
-
-## Build And Test
+## Build
 
 Default development flow uses vendored C API sources:
 
@@ -25,17 +13,26 @@ Default development flow uses vendored C API sources:
 cargo test --workspace
 ```
 
-To test `system` mode against prebuilt local libraries:
+To use prebuilt system libraries instead of vendored sources:
 
 ```bash
 bash scripts/test-system-mode.sh
 ```
 
-If `bicycl_capi` or its dependencies are not in the default linker search path, set
-`BICYCL_CAPI_LIB_DIR` and `BICYCL_DEP_LIB_DIR`. Library names and link kinds can also
-be overridden with `BICYCL_*_LIB_NAME` and `BICYCL_*_LINK_KIND`.
+If libraries are not in the default linker search path (e.g. macOS with Homebrew):
 
-Vendored upstream sources live in `bicycl-rs-sys/vendor/bicycl/`. To resync them from upstream, run `bash scripts/update-vendor.sh [repo] [ref]`. The currently tracked upstream revision is recorded in `bicycl-rs-sys/vendor/bicycl-upstream.toml`.
+```bash
+BICYCL_CAPI_LIB_DIR=/path/to/prebuilt/lib \
+BICYCL_DEP_LIB_DIR=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib \
+cargo test -p bicycl-rs --no-default-features --features system
+```
+
+Vendored upstream sources live in `bicycl-rs-sys/vendor/bicycl/`. To resync them from upstream, run `bash scripts/update-vendor.sh [repo] [ref]`.
+
+## Platform Support
+
+Linux and macOS. Windows is not supported due to a type mismatch in upstream BICYCL
+(`size_t` vs `mp_bitcnt_t` in `gmp_extras.inl`) on MinGW/LLP64 targets.
 
 ## License
 
