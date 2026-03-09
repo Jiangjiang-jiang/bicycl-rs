@@ -26,17 +26,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            shell: bash
             run_capi_smoke: true
-            cargo_test_cmd: cargo test --workspace
           - os: macos-latest
-            shell: bash
             run_capi_smoke: true
-            cargo_test_cmd: cargo test --workspace
           - os: windows-latest
-            shell: msys2 {0}
             run_capi_smoke: false
-            cargo_test_cmd: cargo test --workspace --target x86_64-pc-windows-gnu
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -71,16 +65,27 @@ jobs:
           cmake -S bicycl-rs-sys/capi -B build/capi -DBUILD_TESTING=ON
           cmake --build build/capi
           ctest --test-dir build/capi --output-on-failure
-        shell: ${{ matrix.shell }}
       - name: Rust fmt
+        if: matrix.os != 'windows-latest'
         run: cargo fmt --check
-        shell: ${{ matrix.shell }}
+      - name: Rust fmt (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: cargo fmt --check
       - name: Rust clippy
+        if: matrix.os != 'windows-latest'
         run: cargo clippy --workspace --all-targets -- -D warnings
-        shell: ${{ matrix.shell }}
+      - name: Rust clippy (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Rust test
-        run: ${{ matrix.cargo_test_cmd }}
-        shell: ${{ matrix.shell }}
+        if: matrix.os != 'windows-latest'
+        run: cargo test --workspace
+      - name: Rust test (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: cargo test --workspace --target x86_64-pc-windows-gnu
 
   system-mode:
     runs-on: ${{ matrix.os }}
@@ -89,9 +94,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            shell: bash
           - os: macos-latest
-            shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -110,7 +113,6 @@ jobs:
           echo "BICYCL_DEP_LIB_DIR=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
       - name: Rust test (system mode from local libs)
         run: bash scripts/test-system-mode.sh
-        shell: ${{ matrix.shell }}
 
   sanitize:
     runs-on: ubuntu-latest
