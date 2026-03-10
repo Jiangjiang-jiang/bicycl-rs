@@ -9,11 +9,16 @@ fn main() {
 
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("manifest dir"));
     let capi_dir = manifest_dir.join("capi");
+
+    println!("cargo:rerun-if-env-changed=BICYCL_SOURCE_DIR");
     let bicycl_source_dir = env::var("BICYCL_SOURCE_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| manifest_dir.join("vendor").join("bicycl"));
 
-    let dst = cmake::Config::new(capi_dir)
+    println!("cargo:rerun-if-changed={}", capi_dir.display());
+    println!("cargo:rerun-if-changed={}", bicycl_source_dir.display());
+
+    let dst = cmake::Config::new(&capi_dir)
         .profile("Release")
         .define("BICYCL_SOURCE_DIR", &bicycl_source_dir)
         .build();
@@ -34,14 +39,7 @@ fn main() {
         _ => println!("cargo:rustc-link-lib=dylib=stdc++"),
     }
 
-    // Third-party libs (linked dynamically by CMake, must be declared for cargo)
     println!("cargo:rustc-link-lib=dylib=gmpxx");
     println!("cargo:rustc-link-lib=dylib=gmp");
     println!("cargo:rustc-link-lib=dylib=crypto");
-
-    println!("cargo:rerun-if-changed=capi/include/bicycl_capi.h");
-    println!("cargo:rerun-if-changed=capi/src/bicycl_capi.cpp");
-    println!("cargo:rerun-if-changed=capi/CMakeLists.txt");
-    println!("cargo:rerun-if-changed=vendor/bicycl/src");
-    println!("cargo:rerun-if-env-changed=BICYCL_SOURCE_DIR");
 }
