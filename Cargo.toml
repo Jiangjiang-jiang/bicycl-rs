@@ -7,7 +7,6 @@ resolver = "2"
 
 [workspace.package]
 edition = "2021"
-rust-version = "1.82"
 authors = ["qsang <qsangxin@gmail.com>"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/Jiangjiang-jiang/bicycl-rs"

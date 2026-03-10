@@ -2,11 +2,10 @@
 name = "bicycl-rs"
 version = "0.1.0"
 edition = "2021"
-rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Safe Rust wrapper for BICYCL C API"
-repository = "https://github.com/Jiangjiang-jiang/bicycl-rs"
+repository.workspace = true
 homepage = "https://github.com/Jiangjiang-jiang/bicycl-rs"
 documentation = "https://docs.rs/bicycl-rs"
 readme = "README.md"
