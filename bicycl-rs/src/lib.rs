@@ -29,12 +29,12 @@
 //! use bicycl_rs::{Context, Error};
 //!
 //! fn main() -> Result<(), Error> {
-//!     let mut ctx = Context::new()?;
+//!     let ctx = Context::new()?;
 //!     let mut rng = ctx.randgen_from_seed_decimal("12345")?;
 //!     let paillier = ctx.paillier(512)?;
-//!     let (sk, pk) = paillier.keygen(&mut ctx, &mut rng)?;
-//!     let ct = paillier.encrypt_decimal(&mut ctx, &pk, &mut rng, "42")?;
-//!     let plain = paillier.decrypt_decimal(&mut ctx, &pk, &sk, &ct)?;
+//!     let (sk, pk) = paillier.keygen(&ctx, &mut rng)?;
+//!     let ct = paillier.encrypt_decimal(&ctx, &pk, &mut rng, "42")?;
+//!     let plain = paillier.decrypt_decimal(&ctx, &pk, &sk, &ct)?;
 //!     assert_eq!(plain, "42");
 //!     Ok(())
 //! }
@@ -125,10 +125,10 @@ pub fn zeroize(buf: &mut [u8]) {
 
 /// The central BICYCL library context.
 ///
-/// All cryptographic objects and operations require a mutable reference to a
-/// `Context`.  The context acts as an error sink: it stores the last error
-/// message produced by the C library and is passed to every operation so the
-/// library has somewhere to record diagnostic information.
+/// All cryptographic objects and operations require a reference to a `Context`.
+/// The context acts as an error sink: it stores the last error message produced
+/// by the C library and is passed to every operation so the library has
+/// somewhere to record diagnostic information.
 ///
 /// All derived objects (`RandGen`, scheme instances, keys, ciphertexts, etc.)
 /// own their data independently and do **not** hold pointers into the context's
@@ -151,7 +151,7 @@ impl Context {
         let mut raw = std::ptr::null_mut();
         let status = unsafe { bicycl_rs_sys::bicycl_context_new(&mut raw as *mut _) };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_context_new"))?;
+        let raw = NonNull::new(raw).expect("bicycl_context_new returned null");
         Ok(Self {
             raw,
             _marker: PhantomData,
@@ -170,7 +170,7 @@ impl Context {
     }
 
     /// Clears the last error message stored in the context.
-    pub fn clear_error(&mut self) {
+    pub fn clear_error(&self) {
         unsafe { bicycl_rs_sys::bicycl_context_clear_error(self.raw.as_ptr()) }
     }
 
@@ -179,7 +179,7 @@ impl Context {
     /// `seed_decimal` must be a valid decimal integer (e.g., `"12345"`).
     /// The same seed always produces the same sequence, which is useful for
     /// reproducible tests but **must not be used with a fixed seed in production**.
-    pub fn randgen_from_seed_decimal(&mut self, seed_decimal: &str) -> Result<RandGen> {
+    pub fn randgen_from_seed_decimal(&self, seed_decimal: &str) -> Result<RandGen> {
         let seed_c = CString::new(seed_decimal)?;
         let mut raw = std::ptr::null_mut();
         let status = unsafe {
@@ -191,7 +191,7 @@ impl Context {
         };
         status_to_result(status)?;
         let raw =
-            NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_randgen_new_from_seed_decimal"))?;
+            NonNull::new(raw).expect("bicycl_randgen_new_from_seed_decimal returned null");
         Ok(RandGen {
             raw,
             _marker: PhantomData,
@@ -202,7 +202,7 @@ impl Context {
     ///
     /// `discriminant_decimal` must be a negative integer (e.g., `"-23"`).
     pub fn classgroup_from_discriminant_decimal(
-        &mut self,
+        &self,
         discriminant_decimal: &str,
     ) -> Result<ClassGroup> {
         let disc_c = CString::new(discriminant_decimal)?;
@@ -215,9 +215,7 @@ impl Context {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi(
-            "bicycl_classgroup_new_from_discriminant_decimal",
-        ))?;
+        let raw = NonNull::new(raw).expect("bicycl_classgroup_new_from_discriminant_decimal returned null");
         Ok(ClassGroup {
             raw,
             _marker: PhantomData,
@@ -227,13 +225,13 @@ impl Context {
     /// Creates a Paillier cryptosystem instance with the given RSA modulus bit length.
     ///
     /// Typical values for `modulus_bits`: 512 (testing), 1024, 2048.
-    pub fn paillier(&mut self, modulus_bits: u32) -> Result<Paillier> {
+    pub fn paillier(&self, modulus_bits: u32) -> Result<Paillier> {
         let mut raw = std::ptr::null_mut();
         let status = unsafe {
             bicycl_rs_sys::bicycl_paillier_new(self.raw.as_ptr(), modulus_bits, &mut raw as *mut _)
         };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_paillier_new"))?;
+        let raw = NonNull::new(raw).expect("bicycl_paillier_new returned null");
         Ok(Paillier {
             raw,
             _marker: PhantomData,
@@ -244,7 +242,7 @@ impl Context {
     ///
     /// - `modulus_bits`: RSA modulus bit length (e.g., 1024, 2048).
     /// - `k`: plaintext bit length (must be ≤ `modulus_bits / 2`).
-    pub fn joye_libert(&mut self, modulus_bits: u32, k: u32) -> Result<JoyeLibert> {
+    pub fn joye_libert(&self, modulus_bits: u32, k: u32) -> Result<JoyeLibert> {
         let mut raw = std::ptr::null_mut();
         let status = unsafe {
             bicycl_rs_sys::bicycl_joye_libert_new(
@@ -255,7 +253,7 @@ impl Context {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_joye_libert_new"))?;
+        let raw = NonNull::new(raw).expect("bicycl_joye_libert_new returned null");
         Ok(JoyeLibert {
             raw,
             _marker: PhantomData,
@@ -267,7 +265,7 @@ impl Context {
     /// - `q_decimal`: the prime order `q` of the subgroup (decimal string).
     /// - `k`: the bit-size parameter `k` (plaintext space is `Z/q^k`).
     /// - `p_decimal`: the class-group prime `p` (decimal string).
-    pub fn cl_hsmqk(&mut self, q_decimal: &str, k: u32, p_decimal: &str) -> Result<ClHsmqk> {
+    pub fn cl_hsmqk(&self, q_decimal: &str, k: u32, p_decimal: &str) -> Result<ClHsmqk> {
         let q_c = CString::new(q_decimal)?;
         let p_c = CString::new(p_decimal)?;
         let mut raw = std::ptr::null_mut();
@@ -281,7 +279,7 @@ impl Context {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_new"))?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_new returned null");
         Ok(ClHsmqk {
             raw,
             _marker: PhantomData,
@@ -292,7 +290,7 @@ impl Context {
     ///
     /// - `n_decimal`: the RSA-like composite modulus `n` (decimal string).
     /// - `k`: the bit-size parameter `k` (plaintext space is `Z/2^k`).
-    pub fn cl_hsm2k(&mut self, n_decimal: &str, k: u32) -> Result<ClHsm2k> {
+    pub fn cl_hsm2k(&self, n_decimal: &str, k: u32) -> Result<ClHsm2k> {
         let n_c = CString::new(n_decimal)?;
         let mut raw = std::ptr::null_mut();
         let status = unsafe {
@@ -304,7 +302,7 @@ impl Context {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_new"))?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_new returned null");
         Ok(ClHsm2k {
             raw,
             _marker: PhantomData,
@@ -314,13 +312,13 @@ impl Context {
     /// Creates an ECDSA instance at the given security level.
     ///
     /// `seclevel_bits` selects the elliptic curve (e.g., 112 → P-224, 128 → P-256).
-    pub fn ecdsa(&mut self, seclevel_bits: u32) -> Result<Ecdsa> {
+    pub fn ecdsa(&self, seclevel_bits: u32) -> Result<Ecdsa> {
         let mut raw = std::ptr::null_mut();
         let status = unsafe {
             bicycl_rs_sys::bicycl_ecdsa_new(self.raw.as_ptr(), seclevel_bits, &mut raw as *mut _)
         };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_ecdsa_new"))?;
+        let raw = NonNull::new(raw).expect("bicycl_ecdsa_new returned null");
         Ok(Ecdsa {
             raw,
             _marker: PhantomData,
@@ -332,7 +330,7 @@ impl Context {
     /// Drive the session through the required keygen and sign rounds; see
     /// [`TwoPartyEcdsaSession`] for method details.
     pub fn two_party_ecdsa_session(
-        &mut self,
+        &self,
         rng: &mut RandGen,
         seclevel_bits: u32,
     ) -> Result<TwoPartyEcdsaSession> {
@@ -347,9 +345,10 @@ impl Context {
         };
         status_to_result(status)?;
         let raw =
-            NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_two_party_ecdsa_session_new"))?;
+            NonNull::new(raw).expect("bicycl_two_party_ecdsa_session_new returned null");
         Ok(TwoPartyEcdsaSession {
             raw,
+            _state: PhantomData,
             _marker: PhantomData,
         })
     }
@@ -360,7 +359,7 @@ impl Context {
     /// logarithm in the class group.  See [`ClDlogSession`] for the
     /// prove/verify round methods.
     pub fn cl_dlog_session(
-        &mut self,
+        &self,
         rng: &mut RandGen,
         seclevel_bits: u32,
     ) -> Result<ClDlogSession> {
@@ -374,9 +373,10 @@ impl Context {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_cl_dlog_session_new"))?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_dlog_session_new returned null");
         Ok(ClDlogSession {
             raw,
+            _state: PhantomData,
             _marker: PhantomData,
         })
     }
@@ -387,7 +387,7 @@ impl Context {
     /// - `threshold_t`: minimum number of participants required to sign
     ///   (must satisfy `threshold_t < n_players`).
     pub fn threshold_ecdsa_session(
-        &mut self,
+        &self,
         rng: &mut RandGen,
         seclevel_bits: u32,
         n_players: u32,
@@ -406,9 +406,10 @@ impl Context {
         };
         status_to_result(status)?;
         let raw =
-            NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_threshold_ecdsa_session_new"))?;
+            NonNull::new(raw).expect("bicycl_threshold_ecdsa_session_new returned null");
         Ok(ThresholdEcdsaSession {
             raw,
+            _state: PhantomData,
             _marker: PhantomData,
         })
     }
@@ -446,7 +447,7 @@ pub struct ClassGroup {
 
 impl ClassGroup {
     /// Returns the identity element (principal form) of this class group.
-    pub fn one(&self, ctx: &mut Context) -> Result<Qfi> {
+    pub fn one(&self, ctx: &Context) -> Result<Qfi> {
         let mut raw = std::ptr::null_mut();
         let status = unsafe {
             bicycl_rs_sys::bicycl_classgroup_one(
@@ -456,7 +457,7 @@ impl ClassGroup {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_classgroup_one"))?;
+        let raw = NonNull::new(raw).expect("bicycl_classgroup_one returned null");
         Ok(Qfi {
             raw,
             _marker: PhantomData,
@@ -464,7 +465,7 @@ impl ClassGroup {
     }
 
     /// Computes the NUDUPL squaring of a QFI element (i.e., `input² = input ∘ input`).
-    pub fn nudupl(&self, ctx: &mut Context, input: &Qfi) -> Result<Qfi> {
+    pub fn nudupl(&self, ctx: &Context, input: &Qfi) -> Result<Qfi> {
         let mut raw = std::ptr::null_mut();
         let status = unsafe {
             bicycl_rs_sys::bicycl_classgroup_nudupl(
@@ -475,7 +476,7 @@ impl ClassGroup {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_classgroup_nudupl"))?;
+        let raw = NonNull::new(raw).expect("bicycl_classgroup_nudupl returned null");
         Ok(Qfi {
             raw,
             _marker: PhantomData,
@@ -500,7 +501,7 @@ pub struct Qfi {
 
 impl Qfi {
     /// Returns `true` if this element is the identity element of the class group.
-    pub fn is_one(&self, ctx: &mut Context) -> Result<bool> {
+    pub fn is_one(&self, ctx: &Context) -> Result<bool> {
         let mut out: c_int = 0;
         let status = unsafe {
             bicycl_rs_sys::bicycl_qfi_is_one(
@@ -514,7 +515,7 @@ impl Qfi {
     }
 
     /// Returns the discriminant of the class group this element belongs to, as a decimal string.
-    pub fn discriminant_decimal(&self, ctx: &mut Context) -> Result<String> {
+    pub fn discriminant_decimal(&self, ctx: &Context) -> Result<String> {
         ffi_string_from_len(|buf, len| unsafe {
             bicycl_rs_sys::bicycl_qfi_discriminant_decimal(
                 ctx.raw.as_ptr(),
@@ -568,7 +569,7 @@ impl Paillier {
     /// Returns `(secret_key, public_key)`.
     pub fn keygen(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         rng: &mut RandGen,
     ) -> Result<(PaillierSecretKey, PaillierPublicKey)> {
         let mut sk_raw = std::ptr::null_mut();
@@ -585,11 +586,11 @@ impl Paillier {
         status_to_result(status)?;
 
         let sk = PaillierSecretKey {
-            raw: NonNull::new(sk_raw).ok_or(Error::NullFromFfi("bicycl_paillier_keygen/sk"))?,
+            raw: NonNull::new(sk_raw).expect("bicycl_paillier_keygen/sk returned null"),
             _marker: PhantomData,
         };
         let pk = PaillierPublicKey {
-            raw: NonNull::new(pk_raw).ok_or(Error::NullFromFfi("bicycl_paillier_keygen/pk"))?,
+            raw: NonNull::new(pk_raw).expect("bicycl_paillier_keygen/pk returned null"),
             _marker: PhantomData,
         };
         Ok((sk, pk))
@@ -600,7 +601,7 @@ impl Paillier {
     /// The plaintext must lie in `[0, N)` where `N` is the Paillier modulus.
     pub fn encrypt_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &PaillierPublicKey,
         rng: &mut RandGen,
         message_decimal: &str,
@@ -619,7 +620,7 @@ impl Paillier {
         };
         status_to_result(status)?;
         let raw =
-            NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_paillier_encrypt_decimal"))?;
+            NonNull::new(ct_raw).expect("bicycl_paillier_encrypt_decimal returned null");
         Ok(PaillierCiphertext {
             raw,
             _marker: PhantomData,
@@ -633,7 +634,7 @@ impl Paillier {
     /// during the decryption computation.
     pub fn decrypt_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &PaillierPublicKey,
         sk: &PaillierSecretKey,
         ct: &PaillierCiphertext,
@@ -710,7 +711,7 @@ impl JoyeLibert {
     /// Generates a fresh Joye-Libert key pair.  Returns `(secret_key, public_key)`.
     pub fn keygen(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         rng: &mut RandGen,
     ) -> Result<(JoyeLibertSecretKey, JoyeLibertPublicKey)> {
         let mut sk_raw = std::ptr::null_mut();
@@ -727,11 +728,11 @@ impl JoyeLibert {
         status_to_result(status)?;
 
         let sk = JoyeLibertSecretKey {
-            raw: NonNull::new(sk_raw).ok_or(Error::NullFromFfi("bicycl_joye_libert_keygen/sk"))?,
+            raw: NonNull::new(sk_raw).expect("bicycl_joye_libert_keygen/sk returned null"),
             _marker: PhantomData,
         };
         let pk = JoyeLibertPublicKey {
-            raw: NonNull::new(pk_raw).ok_or(Error::NullFromFfi("bicycl_joye_libert_keygen/pk"))?,
+            raw: NonNull::new(pk_raw).expect("bicycl_joye_libert_keygen/pk returned null"),
             _marker: PhantomData,
         };
         Ok((sk, pk))
@@ -742,7 +743,7 @@ impl JoyeLibert {
     /// The plaintext must be a non-negative integer less than `2^k`.
     pub fn encrypt_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &JoyeLibertPublicKey,
         rng: &mut RandGen,
         message_decimal: &str,
@@ -761,7 +762,7 @@ impl JoyeLibert {
         };
         status_to_result(status)?;
         let raw =
-            NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_joye_libert_encrypt_decimal"))?;
+            NonNull::new(ct_raw).expect("bicycl_joye_libert_encrypt_decimal returned null");
         Ok(JoyeLibertCiphertext {
             raw,
             _marker: PhantomData,
@@ -771,7 +772,7 @@ impl JoyeLibert {
     /// Decrypts a ciphertext, returning the plaintext as a decimal string.
     pub fn decrypt_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         sk: &JoyeLibertSecretKey,
         ct: &JoyeLibertCiphertext,
     ) -> Result<String> {
@@ -846,7 +847,7 @@ impl ClHsmqk {
     /// Generates a fresh CL_HSMqk key pair.  Returns `(secret_key, public_key)`.
     pub fn keygen(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         rng: &mut RandGen,
     ) -> Result<(ClHsmqkSecretKey, ClHsmqkPublicKey)> {
         let mut sk_raw = std::ptr::null_mut();
@@ -863,11 +864,11 @@ impl ClHsmqk {
         status_to_result(status)?;
 
         let sk = ClHsmqkSecretKey {
-            raw: NonNull::new(sk_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_keygen/sk"))?,
+            raw: NonNull::new(sk_raw).expect("bicycl_cl_hsmqk_keygen/sk returned null"),
             _marker: PhantomData,
         };
         let pk = ClHsmqkPublicKey {
-            raw: NonNull::new(pk_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_keygen/pk"))?,
+            raw: NonNull::new(pk_raw).expect("bicycl_cl_hsmqk_keygen/pk returned null"),
             _marker: PhantomData,
         };
         Ok((sk, pk))
@@ -876,7 +877,7 @@ impl ClHsmqk {
     /// Encrypts a plaintext in `Z/q^k` given as a decimal string.
     pub fn encrypt_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &ClHsmqkPublicKey,
         rng: &mut RandGen,
         message_decimal: &str,
@@ -895,7 +896,7 @@ impl ClHsmqk {
         };
         status_to_result(status)?;
         let raw =
-            NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_encrypt_decimal"))?;
+            NonNull::new(ct_raw).expect("bicycl_cl_hsmqk_encrypt_decimal returned null");
         Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
@@ -905,7 +906,7 @@ impl ClHsmqk {
     /// Decrypts a CL_HSMqk ciphertext, returning the plaintext as a decimal string.
     pub fn decrypt_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         sk: &ClHsmqkSecretKey,
         ct: &ClHsmqkCiphertext,
     ) -> Result<String> {
@@ -924,7 +925,7 @@ impl ClHsmqk {
     /// Homomorphically adds two ciphertexts: `Enc(a) ⊕ Enc(b) = Enc(a+b mod q^k)`.
     pub fn add_ciphertexts(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &ClHsmqkPublicKey,
         rng: &mut RandGen,
         ca: &ClHsmqkCiphertext,
@@ -944,7 +945,7 @@ impl ClHsmqk {
         };
         status_to_result(status)?;
         let raw =
-            NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsmqk_add_ciphertexts"))?;
+            NonNull::new(ct_raw).expect("bicycl_cl_hsmqk_add_ciphertexts returned null");
         Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
@@ -956,7 +957,7 @@ impl ClHsmqk {
     /// `scalar_decimal` is the scalar as a decimal string.
     pub fn scal_ciphertext_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &ClHsmqkPublicKey,
         rng: &mut RandGen,
         ct: &ClHsmqkCiphertext,
@@ -976,9 +977,7 @@ impl ClHsmqk {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
-            "bicycl_cl_hsmqk_scal_ciphertext_decimal",
-        ))?;
+        let raw = NonNull::new(out_raw).expect("bicycl_cl_hsmqk_scal_ciphertext_decimal returned null");
         Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
@@ -992,7 +991,7 @@ impl ClHsmqk {
     /// but in a single C call.  `scalar_decimal` is the scalar as a decimal string.
     pub fn addscal_ciphertexts_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &ClHsmqkPublicKey,
         rng: &mut RandGen,
         ca: &ClHsmqkCiphertext,
@@ -1014,9 +1013,7 @@ impl ClHsmqk {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
-            "bicycl_cl_hsmqk_addscal_ciphertexts_decimal",
-        ))?;
+        let raw = NonNull::new(out_raw).expect("bicycl_cl_hsmqk_addscal_ciphertexts_decimal returned null");
         Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
@@ -1082,7 +1079,7 @@ impl ClHsm2k {
     /// Generates a fresh CL_HSM2k key pair.  Returns `(secret_key, public_key)`.
     pub fn keygen(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         rng: &mut RandGen,
     ) -> Result<(ClHsm2kSecretKey, ClHsm2kPublicKey)> {
         let mut sk_raw = std::ptr::null_mut();
@@ -1099,11 +1096,11 @@ impl ClHsm2k {
         status_to_result(status)?;
 
         let sk = ClHsm2kSecretKey {
-            raw: NonNull::new(sk_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_keygen/sk"))?,
+            raw: NonNull::new(sk_raw).expect("bicycl_cl_hsm2k_keygen/sk returned null"),
             _marker: PhantomData,
         };
         let pk = ClHsm2kPublicKey {
-            raw: NonNull::new(pk_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_keygen/pk"))?,
+            raw: NonNull::new(pk_raw).expect("bicycl_cl_hsm2k_keygen/pk returned null"),
             _marker: PhantomData,
         };
         Ok((sk, pk))
@@ -1112,7 +1109,7 @@ impl ClHsm2k {
     /// Encrypts a plaintext in `Z/2^k` given as a decimal string.
     pub fn encrypt_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &ClHsm2kPublicKey,
         rng: &mut RandGen,
         message_decimal: &str,
@@ -1131,7 +1128,7 @@ impl ClHsm2k {
         };
         status_to_result(status)?;
         let raw =
-            NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_encrypt_decimal"))?;
+            NonNull::new(ct_raw).expect("bicycl_cl_hsm2k_encrypt_decimal returned null");
         Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
@@ -1141,7 +1138,7 @@ impl ClHsm2k {
     /// Decrypts a CL_HSM2k ciphertext, returning the plaintext as a decimal string.
     pub fn decrypt_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         sk: &ClHsm2kSecretKey,
         ct: &ClHsm2kCiphertext,
     ) -> Result<String> {
@@ -1160,7 +1157,7 @@ impl ClHsm2k {
     /// Homomorphically adds two ciphertexts: `Enc(a) ⊕ Enc(b) = Enc(a+b mod 2^k)`.
     pub fn add_ciphertexts(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &ClHsm2kPublicKey,
         rng: &mut RandGen,
         ca: &ClHsm2kCiphertext,
@@ -1180,7 +1177,7 @@ impl ClHsm2k {
         };
         status_to_result(status)?;
         let raw =
-            NonNull::new(ct_raw).ok_or(Error::NullFromFfi("bicycl_cl_hsm2k_add_ciphertexts"))?;
+            NonNull::new(ct_raw).expect("bicycl_cl_hsm2k_add_ciphertexts returned null");
         Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
@@ -1190,7 +1187,7 @@ impl ClHsm2k {
     /// Homomorphically multiplies a ciphertext by a scalar: `Enc(m) * s = Enc(m*s mod 2^k)`.
     pub fn scal_ciphertext_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &ClHsm2kPublicKey,
         rng: &mut RandGen,
         ct: &ClHsm2kCiphertext,
@@ -1210,9 +1207,7 @@ impl ClHsm2k {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
-            "bicycl_cl_hsm2k_scal_ciphertext_decimal",
-        ))?;
+        let raw = NonNull::new(out_raw).expect("bicycl_cl_hsm2k_scal_ciphertext_decimal returned null");
         Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
@@ -1226,7 +1221,7 @@ impl ClHsm2k {
     /// but in a single C call.  `scalar_decimal` is the scalar as a decimal string.
     pub fn addscal_ciphertexts_decimal(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &ClHsm2kPublicKey,
         rng: &mut RandGen,
         ca: &ClHsm2kCiphertext,
@@ -1248,9 +1243,7 @@ impl ClHsm2k {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(out_raw).ok_or(Error::NullFromFfi(
-            "bicycl_cl_hsm2k_addscal_ciphertexts_decimal",
-        ))?;
+        let raw = NonNull::new(out_raw).expect("bicycl_cl_hsm2k_addscal_ciphertexts_decimal returned null");
         Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
@@ -1316,7 +1309,7 @@ impl Ecdsa {
     /// Generates a fresh ECDSA key pair.  Returns `(secret_key, public_key)`.
     pub fn keygen(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         rng: &mut RandGen,
     ) -> Result<(EcdsaSecretKey, EcdsaPublicKey)> {
         let mut sk_raw = std::ptr::null_mut();
@@ -1332,11 +1325,11 @@ impl Ecdsa {
         };
         status_to_result(status)?;
         let sk = EcdsaSecretKey {
-            raw: NonNull::new(sk_raw).ok_or(Error::NullFromFfi("bicycl_ecdsa_keygen/sk"))?,
+            raw: NonNull::new(sk_raw).expect("bicycl_ecdsa_keygen/sk returned null"),
             _marker: PhantomData,
         };
         let pk = EcdsaPublicKey {
-            raw: NonNull::new(pk_raw).ok_or(Error::NullFromFfi("bicycl_ecdsa_keygen/pk"))?,
+            raw: NonNull::new(pk_raw).expect("bicycl_ecdsa_keygen/pk returned null"),
             _marker: PhantomData,
         };
         Ok((sk, pk))
@@ -1347,7 +1340,7 @@ impl Ecdsa {
     /// `msg` is the raw message bytes (not a hash).  The C library hashes it internally.
     pub fn sign_message(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         rng: &mut RandGen,
         sk: &EcdsaSecretKey,
         msg: &[u8],
@@ -1365,7 +1358,7 @@ impl Ecdsa {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(sig_raw).ok_or(Error::NullFromFfi("bicycl_ecdsa_sign_message"))?;
+        let raw = NonNull::new(sig_raw).expect("bicycl_ecdsa_sign_message returned null");
         Ok(EcdsaSignature {
             raw,
             _marker: PhantomData,
@@ -1379,7 +1372,7 @@ impl Ecdsa {
     /// an internal failure (e.g., allocation), not a cryptographic mismatch.
     pub fn verify_message(
         &self,
-        ctx: &mut Context,
+        ctx: &Context,
         pk: &EcdsaPublicKey,
         msg: &[u8],
         sig: &EcdsaSignature,
@@ -1403,155 +1396,229 @@ impl Ecdsa {
 
 impl EcdsaSignature {
     /// Returns the `r` component of the signature as a decimal string.
-    pub fn r_decimal(&self, ctx: &mut Context) -> Result<String> {
+    pub fn r_decimal(&self, ctx: &Context) -> Result<String> {
         ffi_string_from_len(|buf, len| unsafe {
             bicycl_rs_sys::bicycl_ecdsa_sig_r_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
         })
     }
 
     /// Returns the `s` component of the signature as a decimal string.
-    pub fn s_decimal(&self, ctx: &mut Context) -> Result<String> {
+    pub fn s_decimal(&self, ctx: &Context) -> Result<String> {
         ffi_string_from_len(|buf, len| unsafe {
             bicycl_rs_sys::bicycl_ecdsa_sig_s_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
         })
     }
 }
 
+// ── Two-party ECDSA session with typestate ──
+
+/// State markers for [`TwoPartyEcdsaSession`].
+pub mod two_party {
+    pub struct New;
+    pub struct Keygen1;
+    pub struct Keygen2;
+    pub struct Keygen3;
+    pub struct KeygenDone;
+    pub struct Sign1;
+    pub struct Sign2;
+    pub struct Sign3;
+    pub struct Sign4;
+    pub struct SignDone;
+}
+
 /// A stateful session for the interactive two-party (2-of-2) ECDSA signing protocol.
 ///
-/// Create via [`Context::two_party_ecdsa_session`].  The session must be driven
-/// through key-generation and signing rounds in strict order; calling rounds out
-/// of order returns [`Error::InvalidState`].
-#[derive(Debug)]
-pub struct TwoPartyEcdsaSession {
+/// Create via [`Context::two_party_ecdsa_session`].  Each round method consumes
+/// the session and returns the next state on success.  On error, the session is
+/// dropped (the protocol is broken and must be restarted from scratch).
+///
+/// ```text
+/// New → keygen_round1 → Keygen1 → keygen_round2 → Keygen2
+///     → keygen_round3 → Keygen3 → keygen_round4 → KeygenDone
+///     → sign_round1 → Sign1 → sign_round2 → Sign2
+///     → sign_round3 → Sign3 → sign_round4 → Sign4
+///     → sign_finalize → SignDone
+/// ```
+pub struct TwoPartyEcdsaSession<S = two_party::New> {
     raw: NonNull<bicycl_rs_sys::bicycl_two_party_ecdsa_session_t>,
+    _state: PhantomData<S>,
     _marker: PhantomData<*mut ()>,
 }
 
-impl TwoPartyEcdsaSession {
-    /// Executes key-generation round 1 (party contribution and commitment).
-    pub fn keygen_round1(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round1(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes key-generation round 2 (key exchange).
-    pub fn keygen_round2(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round2(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes key-generation round 3 (proof of knowledge).
-    pub fn keygen_round3(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round3(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes key-generation round 4 (finalization and joint key assembly).
-    pub fn keygen_round4(&mut self, ctx: &mut Context) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round4(ctx.raw.as_ptr(), self.raw.as_ptr())
-        };
-        status_to_result(status)
-    }
-
-    /// Starts signing round 1 for the given message bytes (two-party).
-    pub fn sign_round1(&mut self, ctx: &mut Context, rng: &mut RandGen, msg: &[u8]) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round1(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-                msg.as_ptr(),
-                msg.len(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes signing round 2 (two-party).
-    pub fn sign_round2(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round2(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes signing round 3 (two-party).
-    pub fn sign_round3(&mut self, ctx: &mut Context) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round3(ctx.raw.as_ptr(), self.raw.as_ptr())
-        };
-        status_to_result(status)
-    }
-
-    /// Executes signing round 4 (two-party).
-    pub fn sign_round4(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round4(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Finalizes the two-party signing protocol and verifies the resulting signature.
-    ///
-    /// Returns `true` if the produced signature is valid.
-    pub fn sign_finalize(&mut self, ctx: &mut Context) -> Result<bool> {
-        let mut out_valid: c_int = 0;
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_finalize(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                &mut out_valid as *mut _,
-            )
-        };
-        status_to_result(status)?;
-        Ok(out_valid != 0)
+impl<S> std::fmt::Debug for TwoPartyEcdsaSession<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TwoPartyEcdsaSession")
+            .field("raw", &self.raw)
+            .finish()
     }
 }
 
-impl Drop for TwoPartyEcdsaSession {
+impl<S> TwoPartyEcdsaSession<S> {
+    fn transition<T>(self) -> TwoPartyEcdsaSession<T> {
+        let raw = self.raw;
+        std::mem::forget(self);
+        TwoPartyEcdsaSession {
+            raw,
+            _state: PhantomData,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<S> Drop for TwoPartyEcdsaSession<S> {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_two_party_ecdsa_session_free(self.raw.as_ptr()) }
     }
 }
 
+impl TwoPartyEcdsaSession<two_party::New> {
+    pub fn keygen_round1(self, ctx: &Context, rng: &mut RandGen) -> Result<TwoPartyEcdsaSession<two_party::Keygen1>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round1(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl TwoPartyEcdsaSession<two_party::Keygen1> {
+    pub fn keygen_round2(self, ctx: &Context, rng: &mut RandGen) -> Result<TwoPartyEcdsaSession<two_party::Keygen2>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round2(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl TwoPartyEcdsaSession<two_party::Keygen2> {
+    pub fn keygen_round3(self, ctx: &Context, rng: &mut RandGen) -> Result<TwoPartyEcdsaSession<two_party::Keygen3>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round3(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl TwoPartyEcdsaSession<two_party::Keygen3> {
+    pub fn keygen_round4(self, ctx: &Context) -> Result<TwoPartyEcdsaSession<two_party::KeygenDone>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round4(ctx.raw.as_ptr(), self.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl TwoPartyEcdsaSession<two_party::KeygenDone> {
+    pub fn sign_round1(self, ctx: &Context, rng: &mut RandGen, msg: &[u8]) -> Result<TwoPartyEcdsaSession<two_party::Sign1>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round1(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr(), msg.as_ptr(), msg.len())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl TwoPartyEcdsaSession<two_party::Sign1> {
+    pub fn sign_round2(self, ctx: &Context, rng: &mut RandGen) -> Result<TwoPartyEcdsaSession<two_party::Sign2>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round2(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl TwoPartyEcdsaSession<two_party::Sign2> {
+    pub fn sign_round3(self, ctx: &Context) -> Result<TwoPartyEcdsaSession<two_party::Sign3>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round3(ctx.raw.as_ptr(), self.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl TwoPartyEcdsaSession<two_party::Sign3> {
+    pub fn sign_round4(self, ctx: &Context, rng: &mut RandGen) -> Result<TwoPartyEcdsaSession<two_party::Sign4>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round4(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl TwoPartyEcdsaSession<two_party::Sign4> {
+    /// Returns `true` if the produced signature is valid.
+    pub fn sign_finalize(self, ctx: &Context) -> Result<(TwoPartyEcdsaSession<two_party::SignDone>, bool)> {
+        let mut out_valid: c_int = 0;
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_finalize(ctx.raw.as_ptr(), self.raw.as_ptr(), &mut out_valid as *mut _)
+        };
+        status_to_result(status)?;
+        Ok((self.transition(), out_valid != 0))
+    }
+}
+
+// ── CL DLog session with typestate ──
+
+/// State markers for [`ClDlogSession`].
+pub mod cl_dlog {
+    pub struct New;
+    pub struct Prepared;
+    pub struct Proved;
+    pub struct StatementImported;
+    pub struct Ready;
+}
+
 /// A session for the interactive CL DLog (discrete logarithm) proof protocol.
 ///
-/// Create via [`Context::cl_dlog_session`].  The prover calls
-/// [`prepare_statement`][Self::prepare_statement] → [`prove_round`][Self::prove_round],
-/// and the verifier calls [`import_statement`][Self::import_statement] →
-/// [`import_proof`][Self::import_proof] → [`verify_round`][Self::verify_round].
-#[derive(Debug)]
-pub struct ClDlogSession {
+/// Create via [`Context::cl_dlog_session`].
+///
+/// **Prover path:**
+/// ```text
+/// New → prepare_statement → Prepared → prove_round → Proved
+/// ```
+/// In the `Proved` state: `export_statement`, `export_proof`, `verify_round`.
+///
+/// **Verifier path:**
+/// ```text
+/// New → import_statement → StatementImported → import_proof → Ready
+/// ```
+/// In the `Ready` state: `verify_round`.
+pub struct ClDlogSession<S = cl_dlog::New> {
     raw: NonNull<bicycl_rs_sys::bicycl_cl_dlog_session_t>,
+    _state: PhantomData<S>,
     _marker: PhantomData<*mut ()>,
+}
+
+impl<S> std::fmt::Debug for ClDlogSession<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ClDlogSession")
+            .field("raw", &self.raw)
+            .finish()
+    }
+}
+
+impl<S> ClDlogSession<S> {
+    fn transition<T>(self) -> ClDlogSession<T> {
+        let raw = self.raw;
+        std::mem::forget(self);
+        ClDlogSession {
+            raw,
+            _state: PhantomData,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<S> Drop for ClDlogSession<S> {
+    fn drop(&mut self) {
+        unsafe { bicycl_rs_sys::bicycl_cl_dlog_session_free(self.raw.as_ptr()) }
+    }
 }
 
 /// A serializable message container used to exchange statements and proofs
@@ -1565,97 +1632,85 @@ pub struct ClDlogMessage {
     _marker: PhantomData<*mut ()>,
 }
 
-impl ClDlogSession {
-    /// Prepares the statement (the instance to be proved) for the DLog proof.
-    pub fn prepare_statement(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
+impl ClDlogSession<cl_dlog::New> {
+    /// Prepares the statement (prover path).
+    pub fn prepare_statement(self, ctx: &Context, rng: &mut RandGen) -> Result<ClDlogSession<cl_dlog::Prepared>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_prepare_statement(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes the prover's round (generates the DLog proof).
-    pub fn prove_round(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_prove_round(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes the verifier's round.  Returns `true` if the proof is valid.
-    pub fn verify_round(&self, ctx: &mut Context) -> Result<bool> {
-        let mut out_valid: c_int = 0;
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_verify_round(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                &mut out_valid as *mut _,
-            )
+            bicycl_rs_sys::bicycl_cl_dlog_session_prepare_statement(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
         };
         status_to_result(status)?;
-        Ok(out_valid != 0)
+        Ok(self.transition())
     }
 
-    /// Exports the statement into `out_msg` so it can be sent to the verifier.
-    pub fn export_statement(&self, ctx: &mut Context, out_msg: &mut ClDlogMessage) -> Result<()> {
+    /// Imports the prover's statement (verifier path).
+    pub fn import_statement(self, ctx: &Context, msg: &ClDlogMessage) -> Result<ClDlogSession<cl_dlog::StatementImported>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_export_statement(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                out_msg.raw.as_ptr(),
-            )
+            bicycl_rs_sys::bicycl_cl_dlog_session_import_statement(ctx.raw.as_ptr(), self.raw.as_ptr(), msg.raw.as_ptr())
         };
-        status_to_result(status)
+        status_to_result(status)?;
+        Ok(self.transition())
     }
+}
 
-    /// Imports the prover's statement (on the verifier side).
-    pub fn import_statement(&mut self, ctx: &mut Context, msg: &ClDlogMessage) -> Result<()> {
+impl ClDlogSession<cl_dlog::Prepared> {
+    /// Executes the prover's round (generates the DLog proof).
+    pub fn prove_round(self, ctx: &Context, rng: &mut RandGen) -> Result<ClDlogSession<cl_dlog::Proved>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_import_statement(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                msg.raw.as_ptr(),
-            )
+            bicycl_rs_sys::bicycl_cl_dlog_session_prove_round(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ClDlogSession<cl_dlog::Proved> {
+    /// Exports the statement into `out_msg` so it can be sent to the verifier.
+    pub fn export_statement(&self, ctx: &Context, out_msg: &mut ClDlogMessage) -> Result<()> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_dlog_session_export_statement(ctx.raw.as_ptr(), self.raw.as_ptr(), out_msg.raw.as_ptr())
         };
         status_to_result(status)
     }
 
     /// Exports the proof into `out_msg` so it can be sent to the verifier.
-    pub fn export_proof(&self, ctx: &mut Context, out_msg: &mut ClDlogMessage) -> Result<()> {
+    pub fn export_proof(&self, ctx: &Context, out_msg: &mut ClDlogMessage) -> Result<()> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_export_proof(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                out_msg.raw.as_ptr(),
-            )
+            bicycl_rs_sys::bicycl_cl_dlog_session_export_proof(ctx.raw.as_ptr(), self.raw.as_ptr(), out_msg.raw.as_ptr())
         };
         status_to_result(status)
     }
 
-    /// Imports the proof (on the verifier side) before calling [`verify_round`][Self::verify_round].
-    pub fn import_proof(&mut self, ctx: &mut Context, msg: &ClDlogMessage) -> Result<()> {
+    /// Verifies the proof (self-check).  Returns `true` if valid.
+    pub fn verify_round(&self, ctx: &Context) -> Result<bool> {
+        let mut out_valid: c_int = 0;
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_import_proof(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                msg.raw.as_ptr(),
-            )
+            bicycl_rs_sys::bicycl_cl_dlog_session_verify_round(ctx.raw.as_ptr(), self.raw.as_ptr(), &mut out_valid as *mut _)
         };
-        status_to_result(status)
+        status_to_result(status)?;
+        Ok(out_valid != 0)
     }
 }
 
-impl Drop for ClDlogSession {
-    fn drop(&mut self) {
-        unsafe { bicycl_rs_sys::bicycl_cl_dlog_session_free(self.raw.as_ptr()) }
+impl ClDlogSession<cl_dlog::StatementImported> {
+    /// Imports the proof (on the verifier side).
+    pub fn import_proof(self, ctx: &Context, msg: &ClDlogMessage) -> Result<ClDlogSession<cl_dlog::Ready>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_dlog_session_import_proof(ctx.raw.as_ptr(), self.raw.as_ptr(), msg.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ClDlogSession<cl_dlog::Ready> {
+    /// Executes the verifier's round.  Returns `true` if the proof is valid.
+    pub fn verify_round(&self, ctx: &Context) -> Result<bool> {
+        let mut out_valid: c_int = 0;
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_dlog_session_verify_round(ctx.raw.as_ptr(), self.raw.as_ptr(), &mut out_valid as *mut _)
+        };
+        status_to_result(status)?;
+        Ok(out_valid != 0)
     }
 }
 
@@ -1665,7 +1720,7 @@ impl ClDlogMessage {
         let mut raw = std::ptr::null_mut();
         let status = unsafe { bicycl_rs_sys::bicycl_cl_dlog_message_new(&mut raw as *mut _) };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).ok_or(Error::NullFromFfi("bicycl_cl_dlog_message_new"))?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_dlog_message_new returned null");
         Ok(Self {
             raw,
             _marker: PhantomData,
@@ -1673,26 +1728,16 @@ impl ClDlogMessage {
     }
 
     /// Serializes the message to bytes for transmission.
-    pub fn to_bytes(&self, ctx: &mut Context) -> Result<Vec<u8>> {
+    pub fn to_bytes(&self, ctx: &Context) -> Result<Vec<u8>> {
         ffi_bytes_from_len(|buf, len| unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_message_export_bytes(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                buf,
-                len,
-            )
+            bicycl_rs_sys::bicycl_cl_dlog_message_export_bytes(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
         })
     }
 
     /// Deserializes bytes into this message container (overwrites any previous content).
-    pub fn load_bytes(&mut self, ctx: &mut Context, bytes: &[u8]) -> Result<()> {
+    pub fn load_bytes(&mut self, ctx: &Context, bytes: &[u8]) -> Result<()> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_message_import_bytes(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                bytes.as_ptr(),
-                bytes.len(),
-            )
+            bicycl_rs_sys::bicycl_cl_dlog_message_import_bytes(ctx.raw.as_ptr(), self.raw.as_ptr(), bytes.as_ptr(), bytes.len())
         };
         status_to_result(status)
     }
@@ -1704,167 +1749,196 @@ impl Drop for ClDlogMessage {
     }
 }
 
+// ── Threshold ECDSA session with typestate ──
+
+/// State markers for [`ThresholdEcdsaSession`].
+pub mod threshold {
+    pub struct New;
+    pub struct Keygen1;
+    pub struct Keygen2;
+    pub struct KeygenDone;
+    pub struct Sign1;
+    pub struct Sign2;
+    pub struct Sign3;
+    pub struct Sign4;
+    pub struct Sign5;
+    pub struct Sign6;
+    pub struct Sign7;
+    pub struct Sign8;
+    pub struct SignDone;
+}
+
 /// A stateful session for the threshold (t-of-n) ECDSA signing protocol.
 ///
-/// Create via [`Context::threshold_ecdsa_session`].  Key generation requires
-/// `keygen_round1` → `keygen_round2` → `keygen_finalize`.  Signing requires
-/// eight rounds followed by `sign_finalize`.
-#[derive(Debug)]
-pub struct ThresholdEcdsaSession {
+/// Create via [`Context::threshold_ecdsa_session`].
+///
+/// ```text
+/// New → keygen_round1 → Keygen1 → keygen_round2 → Keygen2
+///     → keygen_finalize → KeygenDone
+///     → sign_round1 → Sign1 → ... → Sign8
+///     → sign_finalize → SignDone (signature_valid)
+/// ```
+pub struct ThresholdEcdsaSession<S = threshold::New> {
     raw: NonNull<bicycl_rs_sys::bicycl_threshold_ecdsa_session_t>,
+    _state: PhantomData<S>,
     _marker: PhantomData<*mut ()>,
 }
 
-impl ThresholdEcdsaSession {
-    /// Executes threshold key-generation round 1.
-    pub fn keygen_round1(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_round1(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes threshold key-generation round 2.
-    pub fn keygen_round2(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_round2(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Finalizes threshold key generation and assembles the joint public key.
-    pub fn keygen_finalize(&mut self, ctx: &mut Context) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_finalize(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Starts threshold signing round 1 for the given message bytes.
-    pub fn sign_round1(&mut self, ctx: &mut Context, rng: &mut RandGen, msg: &[u8]) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round1(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-                msg.as_ptr(),
-                msg.len(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes threshold signing round 2.
-    pub fn sign_round2(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round2(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes threshold signing round 3.
-    pub fn sign_round3(&mut self, ctx: &mut Context) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round3(ctx.raw.as_ptr(), self.raw.as_ptr())
-        };
-        status_to_result(status)
-    }
-
-    /// Executes threshold signing round 4.
-    pub fn sign_round4(&mut self, ctx: &mut Context) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round4(ctx.raw.as_ptr(), self.raw.as_ptr())
-        };
-        status_to_result(status)
-    }
-
-    /// Executes threshold signing round 5.
-    pub fn sign_round5(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round5(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes threshold signing round 6.
-    pub fn sign_round6(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round6(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes threshold signing round 7.
-    pub fn sign_round7(&mut self, ctx: &mut Context, rng: &mut RandGen) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round7(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                rng.raw.as_ptr(),
-            )
-        };
-        status_to_result(status)
-    }
-
-    /// Executes threshold signing round 8.
-    pub fn sign_round8(&mut self, ctx: &mut Context) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round8(ctx.raw.as_ptr(), self.raw.as_ptr())
-        };
-        status_to_result(status)
-    }
-
-    /// Finalizes the threshold signing protocol (assembles the signature from shares).
-    pub fn sign_finalize(&mut self, ctx: &mut Context) -> Result<()> {
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_finalize(ctx.raw.as_ptr(), self.raw.as_ptr())
-        };
-        status_to_result(status)
-    }
-
-    /// Returns `true` if the threshold signature produced by this session is valid.
-    ///
-    /// Call after [`sign_finalize`][Self::sign_finalize].
-    pub fn signature_valid(&self, ctx: &mut Context) -> Result<bool> {
-        let mut out_valid: c_int = 0;
-        let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_signature_valid(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                &mut out_valid as *mut _,
-            )
-        };
-        status_to_result(status)?;
-        Ok(out_valid != 0)
+impl<S> std::fmt::Debug for ThresholdEcdsaSession<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ThresholdEcdsaSession")
+            .field("raw", &self.raw)
+            .finish()
     }
 }
 
-impl Drop for ThresholdEcdsaSession {
+impl<S> ThresholdEcdsaSession<S> {
+    fn transition<T>(self) -> ThresholdEcdsaSession<T> {
+        let raw = self.raw;
+        std::mem::forget(self);
+        ThresholdEcdsaSession {
+            raw,
+            _state: PhantomData,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<S> Drop for ThresholdEcdsaSession<S> {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_threshold_ecdsa_session_free(self.raw.as_ptr()) }
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::New> {
+    pub fn keygen_round1(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Keygen1>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_round1(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::Keygen1> {
+    pub fn keygen_round2(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Keygen2>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_round2(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::Keygen2> {
+    pub fn keygen_finalize(self, ctx: &Context) -> Result<ThresholdEcdsaSession<threshold::KeygenDone>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_finalize(ctx.raw.as_ptr(), self.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::KeygenDone> {
+    pub fn sign_round1(self, ctx: &Context, rng: &mut RandGen, msg: &[u8]) -> Result<ThresholdEcdsaSession<threshold::Sign1>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round1(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr(), msg.as_ptr(), msg.len())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::Sign1> {
+    pub fn sign_round2(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Sign2>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round2(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::Sign2> {
+    pub fn sign_round3(self, ctx: &Context) -> Result<ThresholdEcdsaSession<threshold::Sign3>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round3(ctx.raw.as_ptr(), self.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::Sign3> {
+    pub fn sign_round4(self, ctx: &Context) -> Result<ThresholdEcdsaSession<threshold::Sign4>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round4(ctx.raw.as_ptr(), self.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::Sign4> {
+    pub fn sign_round5(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Sign5>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round5(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::Sign5> {
+    pub fn sign_round6(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Sign6>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round6(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::Sign6> {
+    pub fn sign_round7(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Sign7>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round7(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::Sign7> {
+    pub fn sign_round8(self, ctx: &Context) -> Result<ThresholdEcdsaSession<threshold::Sign8>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round8(ctx.raw.as_ptr(), self.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::Sign8> {
+    pub fn sign_finalize(self, ctx: &Context) -> Result<ThresholdEcdsaSession<threshold::SignDone>> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_finalize(ctx.raw.as_ptr(), self.raw.as_ptr())
+        };
+        status_to_result(status)?;
+        Ok(self.transition())
+    }
+}
+
+impl ThresholdEcdsaSession<threshold::SignDone> {
+    /// Returns `true` if the threshold signature produced by this session is valid.
+    pub fn signature_valid(&self, ctx: &Context) -> Result<bool> {
+        let mut out_valid: c_int = 0;
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_threshold_ecdsa_signature_valid(ctx.raw.as_ptr(), self.raw.as_ptr(), &mut out_valid as *mut _)
+        };
+        status_to_result(status)?;
+        Ok(out_valid != 0)
     }
 }
 
@@ -1890,84 +1964,4 @@ impl Drop for EcdsaSignature {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_ecdsa_sig_free(self.raw.as_ptr()) }
     }
-}
-
-/// Runs the built-in two-party ECDSA self-test demo from the C library.
-///
-/// Returns `true` if the internal verification passes.  Intended for smoke
-/// testing; use [`TwoPartyEcdsaSession`] for production protocols.
-pub fn two_party_ecdsa_run_demo(
-    ctx: &mut Context,
-    rng: &mut RandGen,
-    seclevel_bits: u32,
-    msg: &[u8],
-) -> Result<bool> {
-    let mut out_valid: c_int = 0;
-    let status = unsafe {
-        bicycl_rs_sys::bicycl_two_party_ecdsa_run_demo(
-            ctx.raw.as_ptr(),
-            rng.raw.as_ptr(),
-            seclevel_bits,
-            msg.as_ptr(),
-            msg.len(),
-            &mut out_valid as *mut _,
-        )
-    };
-    status_to_result(status)?;
-    Ok(out_valid != 0)
-}
-
-/// Runs the built-in CL threshold self-test demo from the C library.
-///
-/// Returns the result string produced by the demo (typically `"2"` for a
-/// successful 2-of-2 threshold reconstruction).
-pub fn cl_threshold_run_demo(ctx: &mut Context, rng: &mut RandGen) -> Result<String> {
-    ffi_string_from_len(|buf, len| unsafe {
-        bicycl_rs_sys::bicycl_cl_threshold_run_demo(ctx.raw.as_ptr(), rng.raw.as_ptr(), buf, len)
-    })
-}
-
-/// Runs the built-in CL DLog proof self-test demo from the C library.
-///
-/// Returns `true` if the internal proof verifies correctly.
-pub fn cl_dlog_proof_run_demo(
-    ctx: &mut Context,
-    rng: &mut RandGen,
-    seclevel_bits: u32,
-) -> Result<bool> {
-    let mut out_valid: c_int = 0;
-    let status = unsafe {
-        bicycl_rs_sys::bicycl_cl_dlog_proof_run_demo(
-            ctx.raw.as_ptr(),
-            rng.raw.as_ptr(),
-            seclevel_bits,
-            &mut out_valid as *mut _,
-        )
-    };
-    status_to_result(status)?;
-    Ok(out_valid != 0)
-}
-
-/// Runs the built-in threshold ECDSA self-test demo from the C library.
-///
-/// Returns `true` if the internal signing and verification pass.
-pub fn threshold_ecdsa_run_demo(
-    ctx: &mut Context,
-    rng: &mut RandGen,
-    seclevel_bits: u32,
-    msg: &[u8],
-) -> Result<bool> {
-    let mut out_valid: c_int = 0;
-    let status = unsafe {
-        bicycl_rs_sys::bicycl_threshold_ecdsa_run_demo(
-            ctx.raw.as_ptr(),
-            rng.raw.as_ptr(),
-            seclevel_bits,
-            msg.as_ptr(),
-            msg.len(),
-            &mut out_valid as *mut _,
-        )
-    };
-    status_to_result(status)?;
-    Ok(out_valid != 0)
 }

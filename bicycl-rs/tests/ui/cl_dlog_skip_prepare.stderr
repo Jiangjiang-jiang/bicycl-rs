@@ -1,0 +1,8 @@
+error[E0599]: no method named `prove_round` found for struct `ClDlogSession` in the current scope
+ --> tests/ui/cl_dlog_skip_prepare.rs:8:21
+  |
+8 |     let _ = session.prove_round(&ctx, &mut rng);
+  |                     ^^^^^^^^^^^ method not found in `ClDlogSession`
+  |
+  = note: the method was found for
+          - `ClDlogSession<Prepared>`

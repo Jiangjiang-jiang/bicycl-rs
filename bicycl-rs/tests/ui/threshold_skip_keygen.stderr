@@ -1,0 +1,11 @@
+error[E0599]: no method named `sign_round1` found for struct `ThresholdEcdsaSession` in the current scope
+ --> tests/ui/threshold_skip_keygen.rs:8:21
+  |
+8 |     let _ = session.sign_round1(&ctx, &mut rng, b"msg");
+  |                     ^^^^^^^^^^^
+  |
+help: there is a method `keygen_round1` with a similar name, but with different arguments
+ --> src/lib.rs
+  |
+  |     pub fn keygen_round1(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Keygen1>> {
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
