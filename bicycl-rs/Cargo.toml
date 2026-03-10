@@ -18,13 +18,8 @@ include = [
 keywords = ["crypto", "class-group", "bicycl"]
 categories = ["cryptography", "api-bindings"]
 
-[features]
-default = ["vendored"]
-vendored = ["bicycl-rs-sys/vendored"]
-docsrs = ["bicycl-rs-sys/docsrs"]
-
 [dependencies]
-bicycl-rs-sys = { path = "../bicycl-rs-sys", version = "0.1.0", default-features = false }
+bicycl-rs-sys = { path = "../bicycl-rs-sys", version = "0.1.0" }
 thiserror = "2"
 
 [lints]
@@ -32,7 +27,3 @@ workspace = true
 
 [dev-dependencies]
 serial_test = "3"
-
-[package.metadata.docs.rs]
-features = ["docsrs"]
-no-default-features = true

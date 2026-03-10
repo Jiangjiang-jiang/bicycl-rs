@@ -25,15 +25,6 @@ include = [
   "vendor/bicycl/AUTHORS",
 ]
 
-[features]
-default = ["vendored"]
-vendored = []
-docsrs = []
-
-[package.metadata.docs.rs]
-features = ["docsrs"]
-no-default-features = true
-
 [build-dependencies]
 cmake = "0.1"
 
