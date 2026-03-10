@@ -20,9 +20,7 @@ fn smoke_safe_api() {
 
     let paillier = ctx.paillier(64).unwrap();
     let (sk, pk) = paillier.keygen(&ctx, &mut rng).unwrap();
-    let ct = paillier
-        .encrypt_decimal(&ctx, &pk, &mut rng, "42")
-        .unwrap();
+    let ct = paillier.encrypt_decimal(&ctx, &pk, &mut rng, "42").unwrap();
     let clear = paillier.decrypt_decimal(&ctx, &pk, &sk, &ct).unwrap();
     assert_eq!(clear, "42");
 
@@ -41,60 +39,41 @@ fn smoke_safe_api() {
     let cl_ct_add = cl
         .add_ciphertexts(&ctx, &cl_pk, &mut rng, &cl_ct, &cl_ct)
         .unwrap();
-    assert_eq!(
-        cl.decrypt_decimal(&ctx, &cl_sk, &cl_ct_add).unwrap(),
-        "1"
-    );
+    assert_eq!(cl.decrypt_decimal(&ctx, &cl_sk, &cl_ct_add).unwrap(), "1");
 
     let cl_ct_scal = cl
         .scal_ciphertext_decimal(&ctx, &cl_pk, &mut rng, &cl_ct, "3")
         .unwrap();
-    assert_eq!(
-        cl.decrypt_decimal(&ctx, &cl_sk, &cl_ct_scal).unwrap(),
-        "0"
-    );
+    assert_eq!(cl.decrypt_decimal(&ctx, &cl_sk, &cl_ct_scal).unwrap(), "0");
 
     let cl_ct_addscal = cl
         .addscal_ciphertexts_decimal(&ctx, &cl_pk, &mut rng, &cl_ct, &cl_ct, "2")
         .unwrap();
     assert_eq!(
-        cl.decrypt_decimal(&ctx, &cl_sk, &cl_ct_addscal)
-            .unwrap(),
+        cl.decrypt_decimal(&ctx, &cl_sk, &cl_ct_addscal).unwrap(),
         "0"
     );
 
     let cl2 = ctx.cl_hsm2k("15", 3).unwrap();
     let (cl2_sk, cl2_pk) = cl2.keygen(&ctx, &mut rng).unwrap();
-    let cl2_ct = cl2
-        .encrypt_decimal(&ctx, &cl2_pk, &mut rng, "5")
-        .unwrap();
-    assert_eq!(
-        cl2.decrypt_decimal(&ctx, &cl2_sk, &cl2_ct).unwrap(),
-        "5"
-    );
+    let cl2_ct = cl2.encrypt_decimal(&ctx, &cl2_pk, &mut rng, "5").unwrap();
+    assert_eq!(cl2.decrypt_decimal(&ctx, &cl2_sk, &cl2_ct).unwrap(), "5");
 
     let cl2_add = cl2
         .add_ciphertexts(&ctx, &cl2_pk, &mut rng, &cl2_ct, &cl2_ct)
         .unwrap();
-    assert_eq!(
-        cl2.decrypt_decimal(&ctx, &cl2_sk, &cl2_add).unwrap(),
-        "2"
-    );
+    assert_eq!(cl2.decrypt_decimal(&ctx, &cl2_sk, &cl2_add).unwrap(), "2");
 
     let cl2_scal = cl2
         .scal_ciphertext_decimal(&ctx, &cl2_pk, &mut rng, &cl2_ct, "3")
         .unwrap();
-    assert_eq!(
-        cl2.decrypt_decimal(&ctx, &cl2_sk, &cl2_scal).unwrap(),
-        "7"
-    );
+    assert_eq!(cl2.decrypt_decimal(&ctx, &cl2_sk, &cl2_scal).unwrap(), "7");
 
     let cl2_addscal = cl2
         .addscal_ciphertexts_decimal(&ctx, &cl2_pk, &mut rng, &cl2_ct, &cl2_ct, "2")
         .unwrap();
     assert_eq!(
-        cl2.decrypt_decimal(&ctx, &cl2_sk, &cl2_addscal)
-            .unwrap(),
+        cl2.decrypt_decimal(&ctx, &cl2_sk, &cl2_addscal).unwrap(),
         "7"
     );
 
@@ -103,12 +82,8 @@ fn smoke_safe_api() {
     let sig = ecdsa
         .sign_message(&ctx, &mut rng, &ecdsa_sk, b"abc")
         .unwrap();
-    assert!(ecdsa
-        .verify_message(&ctx, &ecdsa_pk, b"abc", &sig)
-        .unwrap());
-    assert!(!ecdsa
-        .verify_message(&ctx, &ecdsa_pk, b"abd", &sig)
-        .unwrap());
+    assert!(ecdsa.verify_message(&ctx, &ecdsa_pk, b"abc", &sig).unwrap());
+    assert!(!ecdsa.verify_message(&ctx, &ecdsa_pk, b"abd", &sig).unwrap());
     assert!(!sig.r_decimal(&ctx).unwrap().is_empty());
     assert!(!sig.s_decimal(&ctx).unwrap().is_empty());
 
@@ -187,9 +162,7 @@ fn repeated_encrypt_decrypt_matches_upstream_test_patterns() {
     let jl = ctx.joye_libert(64, 8).unwrap();
     let (jl_sk, jl_pk) = jl.keygen(&ctx, &mut rng).unwrap();
     for message in ["0", "1", "7", "13"] {
-        let ct = jl
-            .encrypt_decimal(&ctx, &jl_pk, &mut rng, message)
-            .unwrap();
+        let ct = jl.encrypt_decimal(&ctx, &jl_pk, &mut rng, message).unwrap();
         let clear = jl.decrypt_decimal(&ctx, &jl_sk, &ct).unwrap();
         assert_eq!(clear, message);
     }
@@ -208,9 +181,7 @@ fn ecdsa_rejects_wrong_key_and_wrong_message_across_multiple_cases() {
     ] {
         let (sk, pk) = ecdsa.keygen(&ctx, &mut rng).unwrap();
         let (wrong_sk, wrong_pk) = ecdsa.keygen(&ctx, &mut rng).unwrap();
-        let sig = ecdsa
-            .sign_message(&ctx, &mut rng, &sk, message)
-            .unwrap();
+        let sig = ecdsa.sign_message(&ctx, &mut rng, &sk, message).unwrap();
 
         assert!(ecdsa.verify_message(&ctx, &pk, message, &sig).unwrap());
         assert!(!ecdsa
@@ -259,9 +230,7 @@ fn cl_ciphertext_ops_match_expected_modular_results() {
         let ct_scal = cl_qk
             .scal_ciphertext_decimal(&ctx, &cl_qk_pk, &mut rng, &ct_a, &scalar.to_string())
             .unwrap();
-        let scal = cl_qk
-            .decrypt_decimal(&ctx, &cl_qk_sk, &ct_scal)
-            .unwrap();
+        let scal = cl_qk.decrypt_decimal(&ctx, &cl_qk_sk, &ct_scal).unwrap();
         assert_eq!(scal, mod_decimal(a * scalar, 3));
     }
 
@@ -284,9 +253,7 @@ fn cl_ciphertext_ops_match_expected_modular_results() {
         let ct_scal = cl_2k
             .scal_ciphertext_decimal(&ctx, &cl_2k_pk, &mut rng, &ct_a, &scalar.to_string())
             .unwrap();
-        let scal = cl_2k
-            .decrypt_decimal(&ctx, &cl_2k_sk, &ct_scal)
-            .unwrap();
+        let scal = cl_2k.decrypt_decimal(&ctx, &cl_2k_sk, &ct_scal).unwrap();
         assert_eq!(scal, mod_decimal(a * scalar, 8));
     }
 }
@@ -324,10 +291,19 @@ fn error_display_formatting() {
     use bicycl_rs::Error;
 
     assert_eq!(Error::NullPtr.to_string(), "BICYCL null pointer");
-    assert_eq!(Error::InvalidArgument.to_string(), "BICYCL invalid argument");
+    assert_eq!(
+        Error::InvalidArgument.to_string(),
+        "BICYCL invalid argument"
+    );
     assert_eq!(Error::Parse.to_string(), "BICYCL parse error");
-    assert_eq!(Error::InvalidState.to_string(), "BICYCL invalid protocol state");
-    assert_eq!(Error::Unknown(999).to_string(), "unknown BICYCL error code: 999");
+    assert_eq!(
+        Error::InvalidState.to_string(),
+        "BICYCL invalid protocol state"
+    );
+    assert_eq!(
+        Error::Unknown(999).to_string(),
+        "unknown BICYCL error code: 999"
+    );
 }
 
 #[test]

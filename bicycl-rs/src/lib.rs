@@ -190,8 +190,7 @@ impl Context {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(raw).expect("bicycl_randgen_new_from_seed_decimal returned null");
+        let raw = NonNull::new(raw).expect("bicycl_randgen_new_from_seed_decimal returned null");
         Ok(RandGen {
             raw,
             _marker: PhantomData,
@@ -215,7 +214,8 @@ impl Context {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(raw).expect("bicycl_classgroup_new_from_discriminant_decimal returned null");
+        let raw = NonNull::new(raw)
+            .expect("bicycl_classgroup_new_from_discriminant_decimal returned null");
         Ok(ClassGroup {
             raw,
             _marker: PhantomData,
@@ -344,8 +344,7 @@ impl Context {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(raw).expect("bicycl_two_party_ecdsa_session_new returned null");
+        let raw = NonNull::new(raw).expect("bicycl_two_party_ecdsa_session_new returned null");
         Ok(TwoPartyEcdsaSession {
             raw,
             _state: PhantomData,
@@ -358,11 +357,7 @@ impl Context {
     /// Use this for non-interactive zero-knowledge proofs of discrete
     /// logarithm in the class group.  See [`ClDlogSession`] for the
     /// prove/verify round methods.
-    pub fn cl_dlog_session(
-        &self,
-        rng: &mut RandGen,
-        seclevel_bits: u32,
-    ) -> Result<ClDlogSession> {
+    pub fn cl_dlog_session(&self, rng: &mut RandGen, seclevel_bits: u32) -> Result<ClDlogSession> {
         let mut raw = std::ptr::null_mut();
         let status = unsafe {
             bicycl_rs_sys::bicycl_cl_dlog_session_new(
@@ -405,8 +400,7 @@ impl Context {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(raw).expect("bicycl_threshold_ecdsa_session_new returned null");
+        let raw = NonNull::new(raw).expect("bicycl_threshold_ecdsa_session_new returned null");
         Ok(ThresholdEcdsaSession {
             raw,
             _state: PhantomData,
@@ -619,8 +613,7 @@ impl Paillier {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(ct_raw).expect("bicycl_paillier_encrypt_decimal returned null");
+        let raw = NonNull::new(ct_raw).expect("bicycl_paillier_encrypt_decimal returned null");
         Ok(PaillierCiphertext {
             raw,
             _marker: PhantomData,
@@ -761,8 +754,7 @@ impl JoyeLibert {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(ct_raw).expect("bicycl_joye_libert_encrypt_decimal returned null");
+        let raw = NonNull::new(ct_raw).expect("bicycl_joye_libert_encrypt_decimal returned null");
         Ok(JoyeLibertCiphertext {
             raw,
             _marker: PhantomData,
@@ -895,8 +887,7 @@ impl ClHsmqk {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(ct_raw).expect("bicycl_cl_hsmqk_encrypt_decimal returned null");
+        let raw = NonNull::new(ct_raw).expect("bicycl_cl_hsmqk_encrypt_decimal returned null");
         Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
@@ -944,8 +935,7 @@ impl ClHsmqk {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(ct_raw).expect("bicycl_cl_hsmqk_add_ciphertexts returned null");
+        let raw = NonNull::new(ct_raw).expect("bicycl_cl_hsmqk_add_ciphertexts returned null");
         Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
@@ -977,7 +967,8 @@ impl ClHsmqk {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(out_raw).expect("bicycl_cl_hsmqk_scal_ciphertext_decimal returned null");
+        let raw =
+            NonNull::new(out_raw).expect("bicycl_cl_hsmqk_scal_ciphertext_decimal returned null");
         Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
@@ -1013,7 +1004,8 @@ impl ClHsmqk {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(out_raw).expect("bicycl_cl_hsmqk_addscal_ciphertexts_decimal returned null");
+        let raw = NonNull::new(out_raw)
+            .expect("bicycl_cl_hsmqk_addscal_ciphertexts_decimal returned null");
         Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
@@ -1127,8 +1119,7 @@ impl ClHsm2k {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(ct_raw).expect("bicycl_cl_hsm2k_encrypt_decimal returned null");
+        let raw = NonNull::new(ct_raw).expect("bicycl_cl_hsm2k_encrypt_decimal returned null");
         Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
@@ -1176,8 +1167,7 @@ impl ClHsm2k {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(ct_raw).expect("bicycl_cl_hsm2k_add_ciphertexts returned null");
+        let raw = NonNull::new(ct_raw).expect("bicycl_cl_hsm2k_add_ciphertexts returned null");
         Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
@@ -1207,7 +1197,8 @@ impl ClHsm2k {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(out_raw).expect("bicycl_cl_hsm2k_scal_ciphertext_decimal returned null");
+        let raw =
+            NonNull::new(out_raw).expect("bicycl_cl_hsm2k_scal_ciphertext_decimal returned null");
         Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
@@ -1243,7 +1234,8 @@ impl ClHsm2k {
             )
         };
         status_to_result(status)?;
-        let raw = NonNull::new(out_raw).expect("bicycl_cl_hsm2k_addscal_ciphertexts_decimal returned null");
+        let raw = NonNull::new(out_raw)
+            .expect("bicycl_cl_hsm2k_addscal_ciphertexts_decimal returned null");
         Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
@@ -1472,9 +1464,17 @@ impl<S> Drop for TwoPartyEcdsaSession<S> {
 }
 
 impl TwoPartyEcdsaSession<two_party::New> {
-    pub fn keygen_round1(self, ctx: &Context, rng: &mut RandGen) -> Result<TwoPartyEcdsaSession<two_party::Keygen1>> {
+    pub fn keygen_round1(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<TwoPartyEcdsaSession<two_party::Keygen1>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round1(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round1(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1482,9 +1482,17 @@ impl TwoPartyEcdsaSession<two_party::New> {
 }
 
 impl TwoPartyEcdsaSession<two_party::Keygen1> {
-    pub fn keygen_round2(self, ctx: &Context, rng: &mut RandGen) -> Result<TwoPartyEcdsaSession<two_party::Keygen2>> {
+    pub fn keygen_round2(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<TwoPartyEcdsaSession<two_party::Keygen2>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round2(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round2(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1492,9 +1500,17 @@ impl TwoPartyEcdsaSession<two_party::Keygen1> {
 }
 
 impl TwoPartyEcdsaSession<two_party::Keygen2> {
-    pub fn keygen_round3(self, ctx: &Context, rng: &mut RandGen) -> Result<TwoPartyEcdsaSession<two_party::Keygen3>> {
+    pub fn keygen_round3(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<TwoPartyEcdsaSession<two_party::Keygen3>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round3(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round3(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1502,7 +1518,10 @@ impl TwoPartyEcdsaSession<two_party::Keygen2> {
 }
 
 impl TwoPartyEcdsaSession<two_party::Keygen3> {
-    pub fn keygen_round4(self, ctx: &Context) -> Result<TwoPartyEcdsaSession<two_party::KeygenDone>> {
+    pub fn keygen_round4(
+        self,
+        ctx: &Context,
+    ) -> Result<TwoPartyEcdsaSession<two_party::KeygenDone>> {
         let status = unsafe {
             bicycl_rs_sys::bicycl_two_party_ecdsa_keygen_round4(ctx.raw.as_ptr(), self.raw.as_ptr())
         };
@@ -1512,9 +1531,20 @@ impl TwoPartyEcdsaSession<two_party::Keygen3> {
 }
 
 impl TwoPartyEcdsaSession<two_party::KeygenDone> {
-    pub fn sign_round1(self, ctx: &Context, rng: &mut RandGen, msg: &[u8]) -> Result<TwoPartyEcdsaSession<two_party::Sign1>> {
+    pub fn sign_round1(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+        msg: &[u8],
+    ) -> Result<TwoPartyEcdsaSession<two_party::Sign1>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round1(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr(), msg.as_ptr(), msg.len())
+            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round1(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+                msg.as_ptr(),
+                msg.len(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1522,9 +1552,17 @@ impl TwoPartyEcdsaSession<two_party::KeygenDone> {
 }
 
 impl TwoPartyEcdsaSession<two_party::Sign1> {
-    pub fn sign_round2(self, ctx: &Context, rng: &mut RandGen) -> Result<TwoPartyEcdsaSession<two_party::Sign2>> {
+    pub fn sign_round2(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<TwoPartyEcdsaSession<two_party::Sign2>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round2(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round2(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1542,9 +1580,17 @@ impl TwoPartyEcdsaSession<two_party::Sign2> {
 }
 
 impl TwoPartyEcdsaSession<two_party::Sign3> {
-    pub fn sign_round4(self, ctx: &Context, rng: &mut RandGen) -> Result<TwoPartyEcdsaSession<two_party::Sign4>> {
+    pub fn sign_round4(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<TwoPartyEcdsaSession<two_party::Sign4>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round4(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_round4(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1553,10 +1599,17 @@ impl TwoPartyEcdsaSession<two_party::Sign3> {
 
 impl TwoPartyEcdsaSession<two_party::Sign4> {
     /// Returns `true` if the produced signature is valid.
-    pub fn sign_finalize(self, ctx: &Context) -> Result<(TwoPartyEcdsaSession<two_party::SignDone>, bool)> {
+    pub fn sign_finalize(
+        self,
+        ctx: &Context,
+    ) -> Result<(TwoPartyEcdsaSession<two_party::SignDone>, bool)> {
         let mut out_valid: c_int = 0;
         let status = unsafe {
-            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_finalize(ctx.raw.as_ptr(), self.raw.as_ptr(), &mut out_valid as *mut _)
+            bicycl_rs_sys::bicycl_two_party_ecdsa_sign_finalize(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut out_valid as *mut _,
+            )
         };
         status_to_result(status)?;
         Ok((self.transition(), out_valid != 0))
@@ -1634,18 +1687,34 @@ pub struct ClDlogMessage {
 
 impl ClDlogSession<cl_dlog::New> {
     /// Prepares the statement (prover path).
-    pub fn prepare_statement(self, ctx: &Context, rng: &mut RandGen) -> Result<ClDlogSession<cl_dlog::Prepared>> {
+    pub fn prepare_statement(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<ClDlogSession<cl_dlog::Prepared>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_prepare_statement(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_cl_dlog_session_prepare_statement(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
     }
 
     /// Imports the prover's statement (verifier path).
-    pub fn import_statement(self, ctx: &Context, msg: &ClDlogMessage) -> Result<ClDlogSession<cl_dlog::StatementImported>> {
+    pub fn import_statement(
+        self,
+        ctx: &Context,
+        msg: &ClDlogMessage,
+    ) -> Result<ClDlogSession<cl_dlog::StatementImported>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_import_statement(ctx.raw.as_ptr(), self.raw.as_ptr(), msg.raw.as_ptr())
+            bicycl_rs_sys::bicycl_cl_dlog_session_import_statement(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                msg.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1654,9 +1723,17 @@ impl ClDlogSession<cl_dlog::New> {
 
 impl ClDlogSession<cl_dlog::Prepared> {
     /// Executes the prover's round (generates the DLog proof).
-    pub fn prove_round(self, ctx: &Context, rng: &mut RandGen) -> Result<ClDlogSession<cl_dlog::Proved>> {
+    pub fn prove_round(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<ClDlogSession<cl_dlog::Proved>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_prove_round(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_cl_dlog_session_prove_round(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1667,7 +1744,11 @@ impl ClDlogSession<cl_dlog::Proved> {
     /// Exports the statement into `out_msg` so it can be sent to the verifier.
     pub fn export_statement(&self, ctx: &Context, out_msg: &mut ClDlogMessage) -> Result<()> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_export_statement(ctx.raw.as_ptr(), self.raw.as_ptr(), out_msg.raw.as_ptr())
+            bicycl_rs_sys::bicycl_cl_dlog_session_export_statement(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                out_msg.raw.as_ptr(),
+            )
         };
         status_to_result(status)
     }
@@ -1675,7 +1756,11 @@ impl ClDlogSession<cl_dlog::Proved> {
     /// Exports the proof into `out_msg` so it can be sent to the verifier.
     pub fn export_proof(&self, ctx: &Context, out_msg: &mut ClDlogMessage) -> Result<()> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_export_proof(ctx.raw.as_ptr(), self.raw.as_ptr(), out_msg.raw.as_ptr())
+            bicycl_rs_sys::bicycl_cl_dlog_session_export_proof(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                out_msg.raw.as_ptr(),
+            )
         };
         status_to_result(status)
     }
@@ -1684,7 +1769,11 @@ impl ClDlogSession<cl_dlog::Proved> {
     pub fn verify_round(&self, ctx: &Context) -> Result<bool> {
         let mut out_valid: c_int = 0;
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_verify_round(ctx.raw.as_ptr(), self.raw.as_ptr(), &mut out_valid as *mut _)
+            bicycl_rs_sys::bicycl_cl_dlog_session_verify_round(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut out_valid as *mut _,
+            )
         };
         status_to_result(status)?;
         Ok(out_valid != 0)
@@ -1693,9 +1782,17 @@ impl ClDlogSession<cl_dlog::Proved> {
 
 impl ClDlogSession<cl_dlog::StatementImported> {
     /// Imports the proof (on the verifier side).
-    pub fn import_proof(self, ctx: &Context, msg: &ClDlogMessage) -> Result<ClDlogSession<cl_dlog::Ready>> {
+    pub fn import_proof(
+        self,
+        ctx: &Context,
+        msg: &ClDlogMessage,
+    ) -> Result<ClDlogSession<cl_dlog::Ready>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_import_proof(ctx.raw.as_ptr(), self.raw.as_ptr(), msg.raw.as_ptr())
+            bicycl_rs_sys::bicycl_cl_dlog_session_import_proof(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                msg.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1707,7 +1804,11 @@ impl ClDlogSession<cl_dlog::Ready> {
     pub fn verify_round(&self, ctx: &Context) -> Result<bool> {
         let mut out_valid: c_int = 0;
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_session_verify_round(ctx.raw.as_ptr(), self.raw.as_ptr(), &mut out_valid as *mut _)
+            bicycl_rs_sys::bicycl_cl_dlog_session_verify_round(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut out_valid as *mut _,
+            )
         };
         status_to_result(status)?;
         Ok(out_valid != 0)
@@ -1730,14 +1831,24 @@ impl ClDlogMessage {
     /// Serializes the message to bytes for transmission.
     pub fn to_bytes(&self, ctx: &Context) -> Result<Vec<u8>> {
         ffi_bytes_from_len(|buf, len| unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_message_export_bytes(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
+            bicycl_rs_sys::bicycl_cl_dlog_message_export_bytes(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                buf,
+                len,
+            )
         })
     }
 
     /// Deserializes bytes into this message container (overwrites any previous content).
     pub fn load_bytes(&mut self, ctx: &Context, bytes: &[u8]) -> Result<()> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_cl_dlog_message_import_bytes(ctx.raw.as_ptr(), self.raw.as_ptr(), bytes.as_ptr(), bytes.len())
+            bicycl_rs_sys::bicycl_cl_dlog_message_import_bytes(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                bytes.as_ptr(),
+                bytes.len(),
+            )
         };
         status_to_result(status)
     }
@@ -1811,9 +1922,17 @@ impl<S> Drop for ThresholdEcdsaSession<S> {
 }
 
 impl ThresholdEcdsaSession<threshold::New> {
-    pub fn keygen_round1(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Keygen1>> {
+    pub fn keygen_round1(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<ThresholdEcdsaSession<threshold::Keygen1>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_round1(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_round1(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1821,9 +1940,17 @@ impl ThresholdEcdsaSession<threshold::New> {
 }
 
 impl ThresholdEcdsaSession<threshold::Keygen1> {
-    pub fn keygen_round2(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Keygen2>> {
+    pub fn keygen_round2(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<ThresholdEcdsaSession<threshold::Keygen2>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_round2(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_round2(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1831,9 +1958,15 @@ impl ThresholdEcdsaSession<threshold::Keygen1> {
 }
 
 impl ThresholdEcdsaSession<threshold::Keygen2> {
-    pub fn keygen_finalize(self, ctx: &Context) -> Result<ThresholdEcdsaSession<threshold::KeygenDone>> {
+    pub fn keygen_finalize(
+        self,
+        ctx: &Context,
+    ) -> Result<ThresholdEcdsaSession<threshold::KeygenDone>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_finalize(ctx.raw.as_ptr(), self.raw.as_ptr())
+            bicycl_rs_sys::bicycl_threshold_ecdsa_keygen_finalize(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1841,9 +1974,20 @@ impl ThresholdEcdsaSession<threshold::Keygen2> {
 }
 
 impl ThresholdEcdsaSession<threshold::KeygenDone> {
-    pub fn sign_round1(self, ctx: &Context, rng: &mut RandGen, msg: &[u8]) -> Result<ThresholdEcdsaSession<threshold::Sign1>> {
+    pub fn sign_round1(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+        msg: &[u8],
+    ) -> Result<ThresholdEcdsaSession<threshold::Sign1>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round1(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr(), msg.as_ptr(), msg.len())
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round1(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+                msg.as_ptr(),
+                msg.len(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1851,9 +1995,17 @@ impl ThresholdEcdsaSession<threshold::KeygenDone> {
 }
 
 impl ThresholdEcdsaSession<threshold::Sign1> {
-    pub fn sign_round2(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Sign2>> {
+    pub fn sign_round2(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<ThresholdEcdsaSession<threshold::Sign2>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round2(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round2(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1881,9 +2033,17 @@ impl ThresholdEcdsaSession<threshold::Sign3> {
 }
 
 impl ThresholdEcdsaSession<threshold::Sign4> {
-    pub fn sign_round5(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Sign5>> {
+    pub fn sign_round5(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<ThresholdEcdsaSession<threshold::Sign5>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round5(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round5(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1891,9 +2051,17 @@ impl ThresholdEcdsaSession<threshold::Sign4> {
 }
 
 impl ThresholdEcdsaSession<threshold::Sign5> {
-    pub fn sign_round6(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Sign6>> {
+    pub fn sign_round6(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<ThresholdEcdsaSession<threshold::Sign6>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round6(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round6(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1901,9 +2069,17 @@ impl ThresholdEcdsaSession<threshold::Sign5> {
 }
 
 impl ThresholdEcdsaSession<threshold::Sign6> {
-    pub fn sign_round7(self, ctx: &Context, rng: &mut RandGen) -> Result<ThresholdEcdsaSession<threshold::Sign7>> {
+    pub fn sign_round7(
+        self,
+        ctx: &Context,
+        rng: &mut RandGen,
+    ) -> Result<ThresholdEcdsaSession<threshold::Sign7>> {
         let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round7(ctx.raw.as_ptr(), self.raw.as_ptr(), rng.raw.as_ptr())
+            bicycl_rs_sys::bicycl_threshold_ecdsa_sign_round7(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                rng.raw.as_ptr(),
+            )
         };
         status_to_result(status)?;
         Ok(self.transition())
@@ -1921,7 +2097,10 @@ impl ThresholdEcdsaSession<threshold::Sign7> {
 }
 
 impl ThresholdEcdsaSession<threshold::Sign8> {
-    pub fn sign_finalize(self, ctx: &Context) -> Result<ThresholdEcdsaSession<threshold::SignDone>> {
+    pub fn sign_finalize(
+        self,
+        ctx: &Context,
+    ) -> Result<ThresholdEcdsaSession<threshold::SignDone>> {
         let status = unsafe {
             bicycl_rs_sys::bicycl_threshold_ecdsa_sign_finalize(ctx.raw.as_ptr(), self.raw.as_ptr())
         };
@@ -1935,7 +2114,11 @@ impl ThresholdEcdsaSession<threshold::SignDone> {
     pub fn signature_valid(&self, ctx: &Context) -> Result<bool> {
         let mut out_valid: c_int = 0;
         let status = unsafe {
-            bicycl_rs_sys::bicycl_threshold_ecdsa_signature_valid(ctx.raw.as_ptr(), self.raw.as_ptr(), &mut out_valid as *mut _)
+            bicycl_rs_sys::bicycl_threshold_ecdsa_signature_valid(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut out_valid as *mut _,
+            )
         };
         status_to_result(status)?;
         Ok(out_valid != 0)
