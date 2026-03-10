@@ -27,12 +27,11 @@ BICYCL_DEP_LIB_DIR=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib \
 cargo test -p bicycl-rs --no-default-features --features system
 ```
 
-Vendored upstream sources live in `bicycl-rs-sys/vendor/bicycl/`. To resync them from upstream, run `bash scripts/sync-vendor.sh [repo] [ref]`.
+Upstream BICYCL sources are tracked as a git submodule in `bicycl-rs-sys/vendor/bicycl/`. To update: `git submodule update --remote bicycl-rs-sys/vendor/bicycl`.
 
 ## Platform Support
 
-Linux and macOS. Windows is not supported due to a type mismatch in upstream BICYCL
-(`size_t` vs `mp_bitcnt_t` in `gmp_extras.inl`) on MinGW/LLP64 targets.
+Linux, macOS, and Windows (MinGW).
 
 ## License
 
