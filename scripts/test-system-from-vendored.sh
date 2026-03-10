@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# test-system-from-vendored.sh
+#
+# Integration test for the "system" feature flag.  Since CI runners don't have
+# libbicycl_capi installed system-wide, this script:
+#   1. Builds bicycl-rs-sys in vendored (default) mode to produce libbicycl_capi.a
+#   2. Locates the resulting static library and sets BICYCL_CAPI_LIB_DIR
+#   3. Runs `cargo test -p bicycl-rs --features system` against that library
+#
+# This validates the system-mode link path without requiring a real system install.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

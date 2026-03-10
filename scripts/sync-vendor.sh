@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# sync-vendor.sh
+#
+# Synchronize vendored BICYCL sources from upstream.
+#
+# Defaults (repo URL and commit ref) are read from:
+#   bicycl-rs-sys/vendor/bicycl-upstream.toml
+#
+# Override with positional arguments:
+#   ./scripts/sync-vendor.sh [repo-url] [git-ref]
+#
+# After running, bicycl-upstream.toml is updated with the resolved commit hash.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -42,4 +53,4 @@ ref = "$resolved_ref"
 sync_paths = ["AUTHORS", "LICENSE", "src"]
 EOF
 
-echo "updated vendor/bicycl from $upstream_repo@$resolved_ref"
+echo "synced vendor/bicycl from $upstream_repo@$resolved_ref"

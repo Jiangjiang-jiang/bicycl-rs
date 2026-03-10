@@ -16,7 +16,7 @@ cargo test --workspace
 To use prebuilt system libraries instead of vendored sources:
 
 ```bash
-bash scripts/test-system-mode.sh
+bash scripts/test-system-from-vendored.sh
 ```
 
 If libraries are not in the default linker search path (e.g. macOS with Homebrew):
@@ -27,7 +27,7 @@ BICYCL_DEP_LIB_DIR=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib \
 cargo test -p bicycl-rs --no-default-features --features system
 ```
 
-Vendored upstream sources live in `bicycl-rs-sys/vendor/bicycl/`. To resync them from upstream, run `bash scripts/update-vendor.sh [repo] [ref]`.
+Vendored upstream sources live in `bicycl-rs-sys/vendor/bicycl/`. To resync them from upstream, run `bash scripts/sync-vendor.sh [repo] [ref]`.
 
 ## Platform Support
 
