@@ -9,14 +9,9 @@
 //! - **Threshold ECDSA** (t-of-n)
 //! - **CL DLog proofs**
 //!
-//! # Feature flags
+//! # Build
 //!
-//! - `vendored` *(default)*: compile and statically link the bundled C API.
-//!   Requires CMake, GMP, and OpenSSL development headers at build time.
-//! - `system`: link against a prebuilt `bicycl_capi` library.
-//!   Set `BICYCL_CAPI_LIB_DIR` / `BICYCL_DEP_LIB_DIR` as needed.
-//!
-//! Exactly one of `vendored` or `system` must be enabled.
+//! Requires CMake, GMP, and OpenSSL development headers at build time.
 //!
 //! # Thread safety
 //!
@@ -47,14 +42,6 @@
 //!
 //! [BICYCL]: https://gite.lirmm.fr/crypto/bicycl
 #![deny(unsafe_op_in_unsafe_fn)]
-#[cfg(all(feature = "vendored", feature = "system"))]
-compile_error!("features 'vendored' and 'system' are mutually exclusive");
-#[cfg(all(
-    not(feature = "vendored"),
-    not(feature = "system"),
-    not(feature = "docsrs")
-))]
-compile_error!("enable one of: feature 'vendored' (default) or feature 'system'");
 
 mod error;
 

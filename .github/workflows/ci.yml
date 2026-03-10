@@ -52,7 +52,6 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           echo "LIBRARY_PATH=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
-          echo "BICYCL_DEP_LIB_DIR=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
 
       - name: Install deps (Windows)
         if: runner.os == 'Windows'
@@ -98,10 +97,6 @@ jobs:
           CFLAGS: -fsanitize=address -fno-omit-frame-pointer
           CXXFLAGS: -fsanitize=address -fno-omit-frame-pointer
         run: cargo +nightly test --workspace --target x86_64-unknown-linux-gnu
-
-      - name: Test (system mode)
-        if: matrix.os == 'ubuntu-latest'
-        run: bash scripts/test-system-from-vendored.sh
 
       - name: Doc
         if: matrix.os == 'ubuntu-latest'

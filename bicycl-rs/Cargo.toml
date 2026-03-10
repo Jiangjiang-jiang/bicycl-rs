@@ -21,7 +21,6 @@ categories = ["cryptography", "api-bindings"]
 [features]
 default = ["vendored"]
 vendored = ["bicycl-rs-sys/vendored"]
-system = ["bicycl-rs-sys/system"]
 docsrs = ["bicycl-rs-sys/docsrs"]
 
 [dependencies]

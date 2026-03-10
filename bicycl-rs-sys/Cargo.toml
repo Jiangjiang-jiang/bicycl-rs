@@ -28,7 +28,6 @@ include = [
 [features]
 default = ["vendored"]
 vendored = []
-system = []
 docsrs = []
 
 [package.metadata.docs.rs]

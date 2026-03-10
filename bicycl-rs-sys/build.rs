@@ -45,42 +45,6 @@ fn emit_third_party_links() {
     );
 }
 
-fn emit_link_search_from_env(var: &str) {
-    if let Ok(value) = env::var(var) {
-        for dir in env::split_paths(&value) {
-            if !dir.as_os_str().is_empty() {
-                println!("cargo:rustc-link-search=native={}", dir.display());
-            }
-        }
-    }
-}
-
-fn emit_system_link_flags() {
-    let link_kind = env_or("BICYCL_CAPI_LINK_KIND", "static");
-    if link_kind != "static" && link_kind != "dylib" {
-        panic!("BICYCL_CAPI_LINK_KIND must be 'static' or 'dylib'");
-    }
-    let lib_name = env_or("BICYCL_CAPI_LIB_NAME", "bicycl_capi");
-
-    emit_link_search_from_env("BICYCL_CAPI_LIB_DIR");
-    emit_link_search_from_env("BICYCL_DEP_LIB_DIR");
-    emit_link_lib(&link_kind, &lib_name);
-    emit_cpp_runtime_link();
-    emit_third_party_links();
-    println!("cargo:rerun-if-env-changed=BICYCL_CAPI_LIB_DIR");
-    println!("cargo:rerun-if-env-changed=BICYCL_CAPI_LIB_NAME");
-    println!("cargo:rerun-if-env-changed=BICYCL_CAPI_LINK_KIND");
-    println!("cargo:rerun-if-env-changed=BICYCL_DEP_LIB_DIR");
-    println!("cargo:rerun-if-env-changed=BICYCL_CPP_RUNTIME_LIB_NAME");
-    println!("cargo:rerun-if-env-changed=BICYCL_CPP_RUNTIME_LINK_KIND");
-    println!("cargo:rerun-if-env-changed=BICYCL_GMPXX_LIB_NAME");
-    println!("cargo:rerun-if-env-changed=BICYCL_GMPXX_LINK_KIND");
-    println!("cargo:rerun-if-env-changed=BICYCL_GMP_LIB_NAME");
-    println!("cargo:rerun-if-env-changed=BICYCL_GMP_LINK_KIND");
-    println!("cargo:rerun-if-env-changed=BICYCL_CRYPTO_LIB_NAME");
-    println!("cargo:rerun-if-env-changed=BICYCL_CRYPTO_LINK_KIND");
-}
-
 fn has_cmake() -> bool {
     Command::new("cmake")
         .arg("--version")
@@ -95,34 +59,14 @@ fn main() {
         return;
     }
 
-    let vendored = env::var_os("CARGO_FEATURE_VENDORED").is_some();
-    let system = env::var_os("CARGO_FEATURE_SYSTEM").is_some();
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("manifest dir"));
-
-    if vendored && system {
-        panic!("features 'vendored' and 'system' are mutually exclusive");
-    }
-    if !vendored && !system {
-        panic!("enable one of: feature 'vendored' (default) or feature 'system'");
-    }
-
-    if system {
-        emit_system_link_flags();
-        return;
-    }
-
     let capi_dir = manifest_dir.join("capi");
     let bicycl_source_dir = env::var("BICYCL_SOURCE_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| manifest_dir.join("vendor").join("bicycl"));
 
     if !has_cmake() {
-        panic!(
-            "CMake was not found in PATH. \
-Install CMake to use the default 'vendored' build, \
-or switch to a prebuilt system library with: \
-`--no-default-features --features system` and set `BICYCL_CAPI_LIB_DIR`/`BICYCL_DEP_LIB_DIR` as needed."
-        );
+        panic!("CMake was not found in PATH. Install CMake to build.");
     }
 
     let mut cfg = cmake::Config::new(capi_dir);

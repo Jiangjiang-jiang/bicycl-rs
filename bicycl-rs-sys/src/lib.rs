@@ -1,14 +1,5 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
-#[cfg(all(feature = "vendored", feature = "system"))]
-compile_error!("features 'vendored' and 'system' are mutually exclusive");
-#[cfg(all(
-    not(feature = "vendored"),
-    not(feature = "system"),
-    not(feature = "docsrs")
-))]
-compile_error!("enable one of: feature 'vendored' (default) or feature 'system'");
-
 use core::ffi::{c_char, c_int, c_void};
 
 #[allow(non_camel_case_types)]
