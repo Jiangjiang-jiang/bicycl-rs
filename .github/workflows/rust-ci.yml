@@ -25,8 +25,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      # Windows is excluded: upstream BICYCL has a MinGW build bug
-      # (size_t vs mp_bitcnt_t mismatch in gmp_extras.inl on LLP64 targets)
       matrix:
         include:
           - os: ubuntu-latest
@@ -35,9 +33,16 @@ jobs:
           - os: macos-latest
             run_capi_smoke: true
             run_doc_check: false
+          - os: windows-latest
+            run_capi_smoke: false
+            run_doc_check: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'windows-latest' && 'x86_64-pc-windows-gnu' || '' }}
       - uses: ./.github/actions/install-deps
       - name: C API smoke
         if: matrix.run_capi_smoke
@@ -46,11 +51,20 @@ jobs:
           cmake --build build/capi
           ctest --test-dir build/capi --output-on-failure
       - name: Rust fmt
+        if: matrix.os != 'windows-latest'
         run: cargo fmt --check
       - name: Rust clippy
+        if: matrix.os != 'windows-latest'
         run: cargo clippy --workspace --all-targets -- -D warnings
-      - name: Rust test
+      - name: Rust test (Unix)
+        if: matrix.os != 'windows-latest'
         run: cargo test --workspace
+      - name: Rust check (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: |
+          export PATH="/mingw64/bin:$PATH"
+          cargo check --workspace --target x86_64-pc-windows-gnu
       - name: Rust doc
         if: matrix.run_doc_check
         run: RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace
@@ -65,6 +79,8 @@ jobs:
           - os: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: dtolnay/rust-toolchain@stable
       - uses: ./.github/actions/install-deps
       - name: Rust test (system mode from local libs)
@@ -74,6 +90,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: dtolnay/rust-toolchain@stable
       - uses: ./.github/actions/install-deps
       - name: C API smoke with ASan/UBSan
@@ -93,6 +111,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: dtolnay/rust-toolchain@stable
       - uses: ./.github/actions/install-deps
       - name: cargo package (sys)
