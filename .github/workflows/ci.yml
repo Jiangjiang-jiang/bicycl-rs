@@ -1,24 +1,10 @@
-name: rust-ci
+name: ci
 
 on:
   push:
-    paths:
-      - 'Cargo.toml'
-      - 'bicycl-rs/**'
-      - 'bicycl-rs-sys/**'
-      - 'scripts/**'
-      - 'README.md'
-      - 'LICENSE'
-      - '.github/workflows/rust-ci.yml'
+    branches: [main]
   pull_request:
-    paths:
-      - 'Cargo.toml'
-      - 'bicycl-rs/**'
-      - 'bicycl-rs-sys/**'
-      - 'scripts/**'
-      - 'README.md'
-      - 'LICENSE'
-      - '.github/workflows/rust-ci.yml'
+    branches: [main]
 
 jobs:
   vendored:
@@ -43,7 +29,31 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.os == 'windows-latest' && 'x86_64-pc-windows-gnu' || '' }}
-      - uses: ./.github/actions/install-deps
+      - name: Install deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
+      - name: Install deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake gmp openssl@3
+      - name: Set macOS library paths
+        if: runner.os == 'macOS'
+        run: |
+          echo "LIBRARY_PATH=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
+          echo "BICYCL_DEP_LIB_DIR=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
+      - name: Install deps (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-openssl
       - name: C API smoke
         if: matrix.run_capi_smoke
         run: |
@@ -82,7 +92,19 @@ jobs:
         with:
           submodules: true
       - uses: dtolnay/rust-toolchain@stable
-      - uses: ./.github/actions/install-deps
+      - name: Install deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
+      - name: Install deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake gmp openssl@3
+      - name: Set macOS library paths
+        if: runner.os == 'macOS'
+        run: |
+          echo "LIBRARY_PATH=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
+          echo "BICYCL_DEP_LIB_DIR=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
       - name: Rust test (system mode from local libs)
         run: bash scripts/test-system-from-vendored.sh
 
@@ -93,7 +115,10 @@ jobs:
         with:
           submodules: true
       - uses: dtolnay/rust-toolchain@stable
-      - uses: ./.github/actions/install-deps
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
       - name: C API smoke with ASan/UBSan
         env:
           # detect_leaks=0: known leak in upstream BICYCL (TwoPartyECDSA::Player1 EC_POINT)
@@ -114,7 +139,10 @@ jobs:
         with:
           submodules: true
       - uses: dtolnay/rust-toolchain@stable
-      - uses: ./.github/actions/install-deps
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
       - name: cargo package (sys)
         run: cargo package -p bicycl-rs-sys --list && cargo package -p bicycl-rs-sys
       - name: cargo package (safe)
