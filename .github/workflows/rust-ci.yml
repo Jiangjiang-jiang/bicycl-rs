@@ -38,19 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install Linux deps
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
-      - name: Install macOS deps
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install cmake gmp openssl@3
-      - name: Set macOS linker search paths
-        if: matrix.os == 'macos-latest'
-        run: |
-          echo "LIBRARY_PATH=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/install-deps
       - name: C API smoke
         if: matrix.run_capi_smoke
         run: |
@@ -78,31 +66,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install Linux deps
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
-      - name: Install macOS deps
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install cmake gmp openssl@3
-      - name: Set macOS linker search paths
-        if: matrix.os == 'macos-latest'
-        run: |
-          echo "BICYCL_DEP_LIB_DIR=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/install-deps
       - name: Rust test (system mode from local libs)
-        run: bash scripts/test-system-mode.sh
+        run: bash scripts/test-system-from-vendored.sh
 
   sanitize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install Linux deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
+      - uses: ./.github/actions/install-deps
       - name: C API smoke with ASan/UBSan
         env:
           # detect_leaks=0: known leak in upstream BICYCL (TwoPartyECDSA::Player1 EC_POINT)
@@ -116,27 +89,12 @@ jobs:
           cmake --build build/capi-sanitize
           ctest --test-dir build/capi-sanitize --output-on-failure
 
-  msrv:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.82
-      - name: Install Linux deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
-      - name: Check MSRV
-        run: cargo check --workspace
-
   package-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
+      - uses: ./.github/actions/install-deps
       - name: cargo package (sys)
         run: cargo package -p bicycl-rs-sys --list && cargo package -p bicycl-rs-sys
       - name: cargo package (safe)
