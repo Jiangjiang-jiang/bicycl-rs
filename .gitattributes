@@ -1,6 +1,3 @@
 * text=auto eol=lf
 *.bat text eol=crlf
 *.cmd text eol=crlf
-
-# Keep vendored upstream sources untouched (preserve original line endings).
-bicycl-rs-sys/vendor/bicycl/** -text

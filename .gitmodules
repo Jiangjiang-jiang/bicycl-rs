@@ -1,0 +1,3 @@
+[submodule "bicycl-rs-sys/vendor/bicycl"]
+	path = bicycl-rs-sys/vendor/bicycl
+	url = https://github.com/FXTi/bicycl.git

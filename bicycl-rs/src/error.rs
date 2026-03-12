@@ -2,21 +2,15 @@ use thiserror::Error;
 
 /// All errors that can be returned by this crate.
 ///
-/// The variants fall into three categories:
-/// - **Rust-side conversion errors** (`NulByte`, `Utf8`, `NullFromFfi`): problems
-///   converting data before or after FFI calls.
+/// The variants fall into two categories:
+/// - **Rust-side conversion errors** (`NulByte`, `Utf8`): problems converting
+///   data before or after FFI calls.
 /// - **C library status codes** (all other variants): direct mappings of the
 ///   `bicycl_status_t` enum returned by the C API.
 /// - **`Unknown`**: a status code not recognised by this version of the crate.
 #[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum Error {
-    /// The C function returned `BICYCL_OK` but the output pointer was null,
-    /// indicating an internal bug in the C library rather than a caller error.
-    /// The `&'static str` payload names the function that returned null.
-    #[error("null pointer returned from FFI: {0}")]
-    NullFromFfi(&'static str),
-
     #[error("NUL byte in input string")]
     NulByte(#[from] std::ffi::NulError),
 

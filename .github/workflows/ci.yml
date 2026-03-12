@@ -1,0 +1,110 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --check
+
+  test:
+    needs: fmt
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+          targets: ${{ matrix.os == 'windows-latest' && 'x86_64-pc-windows-gnu' || '' }}
+
+      - name: Install nightly (for sanitizer)
+        if: matrix.os == 'ubuntu-latest'
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+
+      - name: Install deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
+
+      - name: Install deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake gmp openssl@3
+      - name: Set macOS library paths
+        if: runner.os == 'macOS'
+        run: |
+          echo "LIBRARY_PATH=$(brew --prefix gmp)/lib:$(brew --prefix openssl@3)/lib" >> "$GITHUB_ENV"
+
+      - name: Install deps (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          path-type: inherit
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-openssl
+
+      # ── lint ──
+      - name: Clippy (Unix)
+        if: runner.os != 'Windows'
+        run: cargo +stable clippy --workspace --all-targets -- -D warnings
+      - name: Clippy (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          export PATH="/mingw64/bin:$PATH"
+          cargo clippy --workspace --all-targets --target x86_64-pc-windows-gnu -- -D warnings
+
+      # ── test ──
+      - name: Test (Unix)
+        if: runner.os != 'Windows'
+        run: cargo +stable test --workspace
+      - name: Test (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          export PATH="/mingw64/bin:$PATH"
+          cargo test --workspace --target x86_64-pc-windows-gnu
+
+      # ── ubuntu extras ──
+      - name: Test (sanitizer)
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          RUSTFLAGS: -Zsanitizer=address
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+          CFLAGS: -fsanitize=address -fno-omit-frame-pointer
+          CXXFLAGS: -fsanitize=address -fno-omit-frame-pointer
+        run: cargo +nightly test --workspace --target x86_64-unknown-linux-gnu
+
+      - name: Doc
+        if: matrix.os == 'ubuntu-latest'
+        run: RUSTDOCFLAGS="-D warnings" cargo +stable doc --no-deps --workspace
+
+      - name: Package check
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo +stable package -p bicycl-rs-sys --list && cargo +stable package -p bicycl-rs-sys
+          cargo +stable package -p bicycl-rs --list

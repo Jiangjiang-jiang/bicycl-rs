@@ -1,3 +1,0 @@
-repo = "https://gite.lirmm.fr/crypto/bicycl.git"
-ref = "7927f9c4f5ed78af03eaed0ff7e8093e13554382"
-sync_paths = ["AUTHORS", "LICENSE", "src"]
