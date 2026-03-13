@@ -1,0 +1,47 @@
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libgmp-dev libgmpxx4ldbl
+
+      - name: Publish bicycl-rs-sys
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p bicycl-rs-sys
+
+      - name: Wait for crates.io index
+        run: |
+          for i in $(seq 1 30); do
+            if cargo search bicycl-rs-sys | grep -q "^bicycl-rs-sys "; then
+              echo "bicycl-rs-sys is available on crates.io"
+              break
+            fi
+            echo "Waiting for index update... ($i/30)"
+            sleep 10
+          done
+
+      - name: Verify bicycl-rs package
+        run: cargo package -p bicycl-rs
+
+      - name: Publish bicycl-rs
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p bicycl-rs
