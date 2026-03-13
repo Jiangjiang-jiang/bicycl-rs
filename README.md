@@ -4,8 +4,8 @@ Rust bindings for [upstream BICYCL](https://github.com/Jiangjiang-jiang/bicycl).
 
 This workspace contains two crates:
 
-- bicycl-rs-sys: low-level FFI bindings to the BICYCL C API
-- bicycl-rs: safe Rust wrapper built on top of bicycl-rs-sys
+- `bicycl-rs-sys`: low-level FFI bindings to the BICYCL C API
+- `bicycl-rs`: safe Rust wrapper built on top of bicycl-rs-sys
 
 ## Building
 
