@@ -707,11 +707,7 @@ impl Qfi {
     pub fn neg(&self, ctx: &Context) -> Result<Qfi> {
         let mut raw = std::ptr::null_mut();
         let status = unsafe {
-            bicycl_rs_sys::bicycl_qfi_neg(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                &mut raw as *mut _,
-            )
+            bicycl_rs_sys::bicycl_qfi_neg(ctx.raw.as_ptr(), self.raw.as_ptr(), &mut raw as *mut _)
         };
         status_to_result(status)?;
         let raw = NonNull::new(raw).expect("bicycl_qfi_neg returned null");
@@ -1464,8 +1460,7 @@ impl ClHsmqk {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(raw).expect("bicycl_cl_hsmqk_encrypt_decimal_with_r returned null");
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_encrypt_decimal_with_r returned null");
         Ok(ClHsmqkCiphertext {
             raw,
             _marker: PhantomData,
@@ -1483,12 +1478,7 @@ impl ClHsmqkSecretKey {
     /// Serialises this secret key as a decimal string.
     pub fn to_decimal(&self, ctx: &Context) -> Result<String> {
         ffi_string_from_len(|buf, len| unsafe {
-            bicycl_rs_sys::bicycl_cl_hsmqk_sk_decimal(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                buf,
-                len,
-            )
+            bicycl_rs_sys::bicycl_cl_hsmqk_sk_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
         })
     }
 
@@ -2035,8 +2025,7 @@ impl ClHsm2k {
             )
         };
         status_to_result(status)?;
-        let raw =
-            NonNull::new(raw).expect("bicycl_cl_hsm2k_encrypt_decimal_with_r returned null");
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_encrypt_decimal_with_r returned null");
         Ok(ClHsm2kCiphertext {
             raw,
             _marker: PhantomData,
@@ -2054,12 +2043,7 @@ impl ClHsm2kSecretKey {
     /// Serialises this secret key as a decimal string.
     pub fn to_decimal(&self, ctx: &Context) -> Result<String> {
         ffi_string_from_len(|buf, len| unsafe {
-            bicycl_rs_sys::bicycl_cl_hsm2k_sk_decimal(
-                ctx.raw.as_ptr(),
-                self.raw.as_ptr(),
-                buf,
-                len,
-            )
+            bicycl_rs_sys::bicycl_cl_hsm2k_sk_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
         })
     }
 
