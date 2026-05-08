@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define BICYCL_CAPI_VERSION 0x00010000u
+#define BICYCL_CAPI_VERSION 0x00010100u
 
 typedef enum bicycl_status_t {
   BICYCL_OK = 0,
@@ -109,6 +109,164 @@ bicycl_status_t bicycl_qfi_discriminant_decimal(
     const bicycl_qfi_t *qfi,
     char *out_buf,
     size_t *inout_len);
+
+// ── QFI additional ──────────────────────────────────────────────────────
+bicycl_status_t bicycl_qfi_new_from_abc_decimal(
+    bicycl_context_t *ctx, const char *a, const char *b, const char *c,
+    bicycl_qfi_t **out);
+
+bicycl_status_t bicycl_qfi_a_decimal(
+    bicycl_context_t *ctx, const bicycl_qfi_t *qfi, char *out_buf, size_t *inout_len);
+
+bicycl_status_t bicycl_qfi_b_decimal(
+    bicycl_context_t *ctx, const bicycl_qfi_t *qfi, char *out_buf, size_t *inout_len);
+
+bicycl_status_t bicycl_qfi_c_decimal(
+    bicycl_context_t *ctx, const bicycl_qfi_t *qfi, char *out_buf, size_t *inout_len);
+
+bicycl_status_t bicycl_qfi_equal(
+    bicycl_context_t *ctx, const bicycl_qfi_t *a, const bicycl_qfi_t *b, int *out);
+
+bicycl_status_t bicycl_qfi_neg(
+    bicycl_context_t *ctx, const bicycl_qfi_t *qfi, bicycl_qfi_t **out);
+
+bicycl_status_t bicycl_qfi_lift_decimal(
+    bicycl_context_t *ctx, bicycl_qfi_t *qfi, const char *conductor_decimal);
+
+bicycl_status_t bicycl_qfi_to_maximal_order_decimal(
+    bicycl_context_t *ctx, bicycl_qfi_t *qfi,
+    const char *conductor_decimal, const char *DeltaK_decimal, int to_neg);
+
+// ── ClassGroup additional ────────────────────────────────────────────────
+bicycl_status_t bicycl_classgroup_discriminant_decimal(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg, char *out_buf, size_t *inout_len);
+
+bicycl_status_t bicycl_classgroup_nucomp(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg,
+    const bicycl_qfi_t *f1, const bicycl_qfi_t *f2, bicycl_qfi_t **out);
+
+bicycl_status_t bicycl_classgroup_nucompinv(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg,
+    const bicycl_qfi_t *f1, const bicycl_qfi_t *f2, bicycl_qfi_t **out);
+
+bicycl_status_t bicycl_classgroup_nupow_decimal(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg,
+    const bicycl_qfi_t *f, const char *n_decimal, bicycl_qfi_t **out);
+
+bicycl_status_t bicycl_classgroup_nupow2_decimal(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg,
+    const bicycl_qfi_t *f0, const char *n0_decimal,
+    const bicycl_qfi_t *f1, const char *n1_decimal, bicycl_qfi_t **out);
+
+bicycl_status_t bicycl_classgroup_primeform_decimal(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg,
+    const char *p_decimal, bicycl_qfi_t **out);
+
+// ── CL_HSMqk parameters ──────────────────────────────────────────────────
+bicycl_status_t bicycl_cl_hsmqk_q_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsmqk_p_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsmqk_M_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsmqk_DeltaK_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsmqk_Delta_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsmqk_secretkey_bound_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsmqk_Cl_DeltaK(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, bicycl_classgroup_t **out);
+bicycl_status_t bicycl_cl_hsmqk_Cl_Delta(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, bicycl_classgroup_t **out);
+bicycl_status_t bicycl_cl_hsmqk_h(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, bicycl_qfi_t **out);
+
+// ── CL_HSMqk subgroup operations ─────────────────────────────────────────
+bicycl_status_t bicycl_cl_hsmqk_power_of_h_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const char *e_decimal, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsmqk_power_of_f_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const char *m_decimal, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsmqk_dlog_in_F(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const bicycl_qfi_t *fm, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsmqk_from_Cl_DeltaK_to_Cl_Delta(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, bicycl_qfi_t *f);
+
+// ── CL_HSMqk key/ciphertext access ───────────────────────────────────────
+bicycl_status_t bicycl_cl_hsmqk_pk_elt(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_pk_t *pk, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsmqk_pk_new_from_qfi(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const bicycl_qfi_t *qfi, bicycl_cl_hsmqk_pk_t **out);
+bicycl_status_t bicycl_cl_hsmqk_ct_c1(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_ct_t *ct, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsmqk_ct_c2(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_ct_t *ct, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsmqk_ct_new_from_c1c2(
+    bicycl_context_t *ctx, const bicycl_qfi_t *c1, const bicycl_qfi_t *c2,
+    bicycl_cl_hsmqk_ct_t **out);
+bicycl_status_t bicycl_cl_hsmqk_sk_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_sk_t *sk, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsmqk_sk_new_from_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const char *sk_decimal, bicycl_cl_hsmqk_sk_t **out);
+bicycl_status_t bicycl_cl_hsmqk_encrypt_decimal_with_r(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const bicycl_cl_hsmqk_pk_t *pk, const char *message_decimal,
+    const char *r_decimal, bicycl_cl_hsmqk_ct_t **out_ct);
+
+// ── CL_HSM2k parameters ──────────────────────────────────────────────────
+bicycl_status_t bicycl_cl_hsm2k_N_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsm2k_M_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsm2k_DeltaK_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsm2k_Delta_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsm2k_secretkey_bound_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsm2k_Cl_DeltaK(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, bicycl_classgroup_t **out);
+bicycl_status_t bicycl_cl_hsm2k_Cl_Delta(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, bicycl_classgroup_t **out);
+bicycl_status_t bicycl_cl_hsm2k_h(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsm2k_power_of_h_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const char *e_decimal, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsm2k_power_of_f_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const char *m_decimal, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsm2k_dlog_in_F(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const bicycl_qfi_t *fm, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsm2k_from_Cl_DeltaK_to_Cl_Delta(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, bicycl_qfi_t *f);
+bicycl_status_t bicycl_cl_hsm2k_pk_elt(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_pk_t *pk, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsm2k_pk_new_from_qfi(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const bicycl_qfi_t *qfi, bicycl_cl_hsm2k_pk_t **out);
+bicycl_status_t bicycl_cl_hsm2k_ct_c1(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_ct_t *ct, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsm2k_ct_c2(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_ct_t *ct, bicycl_qfi_t **out);
+bicycl_status_t bicycl_cl_hsm2k_ct_new_from_c1c2(
+    bicycl_context_t *ctx, const bicycl_qfi_t *c1, const bicycl_qfi_t *c2,
+    bicycl_cl_hsm2k_ct_t **out);
+bicycl_status_t bicycl_cl_hsm2k_sk_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_sk_t *sk, char *out_buf, size_t *inout_len);
+bicycl_status_t bicycl_cl_hsm2k_sk_new_from_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const char *sk_decimal, bicycl_cl_hsm2k_sk_t **out);
+bicycl_status_t bicycl_cl_hsm2k_encrypt_decimal_with_r(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const bicycl_cl_hsm2k_pk_t *pk, const char *message_decimal,
+    const char *r_decimal, bicycl_cl_hsm2k_ct_t **out_ct);
 
 bicycl_status_t bicycl_paillier_new(
     bicycl_context_t *ctx,

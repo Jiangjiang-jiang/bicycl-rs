@@ -169,7 +169,7 @@ pub struct bicycl_cl_dlog_message_t {
     _private: [u8; 0],
 }
 
-pub const BICYCL_CAPI_VERSION: u32 = 0x0001_0000;
+pub const BICYCL_CAPI_VERSION: u32 = 0x0001_0100;
 
 unsafe extern "C" {
     pub fn bicycl_get_abi_version() -> u32;
@@ -221,6 +221,395 @@ unsafe extern "C" {
         qfi: *const bicycl_qfi_t,
         out_buf: *mut c_char,
         inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    // ── QFI additional ──────────────────────────────────────────────────────
+    pub fn bicycl_qfi_new_from_abc_decimal(
+        ctx: *mut bicycl_context_t,
+        a: *const c_char,
+        b: *const c_char,
+        c: *const c_char,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_qfi_a_decimal(
+        ctx: *mut bicycl_context_t,
+        qfi: *const bicycl_qfi_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_qfi_b_decimal(
+        ctx: *mut bicycl_context_t,
+        qfi: *const bicycl_qfi_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_qfi_c_decimal(
+        ctx: *mut bicycl_context_t,
+        qfi: *const bicycl_qfi_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_qfi_equal(
+        ctx: *mut bicycl_context_t,
+        a: *const bicycl_qfi_t,
+        b: *const bicycl_qfi_t,
+        out: *mut c_int,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_qfi_neg(
+        ctx: *mut bicycl_context_t,
+        qfi: *const bicycl_qfi_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_qfi_lift_decimal(
+        ctx: *mut bicycl_context_t,
+        qfi: *mut bicycl_qfi_t,
+        conductor_decimal: *const c_char,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_qfi_to_maximal_order_decimal(
+        ctx: *mut bicycl_context_t,
+        qfi: *mut bicycl_qfi_t,
+        conductor_decimal: *const c_char,
+        delta_k_decimal: *const c_char,
+        to_neg: c_int,
+    ) -> bicycl_status_t;
+
+    // ── ClassGroup additional ────────────────────────────────────────────────
+    pub fn bicycl_classgroup_discriminant_decimal(
+        ctx: *mut bicycl_context_t,
+        cg: *const bicycl_classgroup_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_classgroup_nucomp(
+        ctx: *mut bicycl_context_t,
+        cg: *const bicycl_classgroup_t,
+        f1: *const bicycl_qfi_t,
+        f2: *const bicycl_qfi_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_classgroup_nucompinv(
+        ctx: *mut bicycl_context_t,
+        cg: *const bicycl_classgroup_t,
+        f1: *const bicycl_qfi_t,
+        f2: *const bicycl_qfi_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_classgroup_nupow_decimal(
+        ctx: *mut bicycl_context_t,
+        cg: *const bicycl_classgroup_t,
+        f: *const bicycl_qfi_t,
+        n_decimal: *const c_char,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_classgroup_nupow2_decimal(
+        ctx: *mut bicycl_context_t,
+        cg: *const bicycl_classgroup_t,
+        f0: *const bicycl_qfi_t,
+        n0_decimal: *const c_char,
+        f1: *const bicycl_qfi_t,
+        n1_decimal: *const c_char,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_classgroup_primeform_decimal(
+        ctx: *mut bicycl_context_t,
+        cg: *const bicycl_classgroup_t,
+        p_decimal: *const c_char,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    // ── CL_HSMqk parameters ──────────────────────────────────────────────────
+    pub fn bicycl_cl_hsmqk_q_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_p_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_M_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_DeltaK_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_Delta_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_secretkey_bound_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_Cl_DeltaK(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        out: *mut *mut bicycl_classgroup_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_Cl_Delta(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        out: *mut *mut bicycl_classgroup_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_h(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    // ── CL_HSMqk subgroup operations ─────────────────────────────────────────
+    pub fn bicycl_cl_hsmqk_power_of_h_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        e_decimal: *const c_char,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_power_of_f_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        m_decimal: *const c_char,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_dlog_in_F(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        fm: *const bicycl_qfi_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_from_Cl_DeltaK_to_Cl_Delta(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        f: *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    // ── CL_HSMqk key/ciphertext access ───────────────────────────────────────
+    pub fn bicycl_cl_hsmqk_pk_elt(
+        ctx: *mut bicycl_context_t,
+        pk: *const bicycl_cl_hsmqk_pk_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_pk_new_from_qfi(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        qfi: *const bicycl_qfi_t,
+        out: *mut *mut bicycl_cl_hsmqk_pk_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_ct_c1(
+        ctx: *mut bicycl_context_t,
+        ct: *const bicycl_cl_hsmqk_ct_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_ct_c2(
+        ctx: *mut bicycl_context_t,
+        ct: *const bicycl_cl_hsmqk_ct_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_ct_new_from_c1c2(
+        ctx: *mut bicycl_context_t,
+        c1: *const bicycl_qfi_t,
+        c2: *const bicycl_qfi_t,
+        out: *mut *mut bicycl_cl_hsmqk_ct_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_sk_decimal(
+        ctx: *mut bicycl_context_t,
+        sk: *const bicycl_cl_hsmqk_sk_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_sk_new_from_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        sk_decimal: *const c_char,
+        out: *mut *mut bicycl_cl_hsmqk_sk_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsmqk_encrypt_decimal_with_r(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsmqk_t,
+        pk: *const bicycl_cl_hsmqk_pk_t,
+        message_decimal: *const c_char,
+        r_decimal: *const c_char,
+        out_ct: *mut *mut bicycl_cl_hsmqk_ct_t,
+    ) -> bicycl_status_t;
+
+    // ── CL_HSM2k parameters ──────────────────────────────────────────────────
+    pub fn bicycl_cl_hsm2k_N_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_M_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_DeltaK_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_Delta_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_secretkey_bound_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_Cl_DeltaK(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        out: *mut *mut bicycl_classgroup_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_Cl_Delta(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        out: *mut *mut bicycl_classgroup_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_h(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_power_of_h_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        e_decimal: *const c_char,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_power_of_f_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        m_decimal: *const c_char,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_dlog_in_F(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        fm: *const bicycl_qfi_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_from_Cl_DeltaK_to_Cl_Delta(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        f: *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_pk_elt(
+        ctx: *mut bicycl_context_t,
+        pk: *const bicycl_cl_hsm2k_pk_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_pk_new_from_qfi(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        qfi: *const bicycl_qfi_t,
+        out: *mut *mut bicycl_cl_hsm2k_pk_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_ct_c1(
+        ctx: *mut bicycl_context_t,
+        ct: *const bicycl_cl_hsm2k_ct_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_ct_c2(
+        ctx: *mut bicycl_context_t,
+        ct: *const bicycl_cl_hsm2k_ct_t,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_ct_new_from_c1c2(
+        ctx: *mut bicycl_context_t,
+        c1: *const bicycl_qfi_t,
+        c2: *const bicycl_qfi_t,
+        out: *mut *mut bicycl_cl_hsm2k_ct_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_sk_decimal(
+        ctx: *mut bicycl_context_t,
+        sk: *const bicycl_cl_hsm2k_sk_t,
+        out_buf: *mut c_char,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_sk_new_from_decimal(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        sk_decimal: *const c_char,
+        out: *mut *mut bicycl_cl_hsm2k_sk_t,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_cl_hsm2k_encrypt_decimal_with_r(
+        ctx: *mut bicycl_context_t,
+        cl: *const bicycl_cl_hsm2k_t,
+        pk: *const bicycl_cl_hsm2k_pk_t,
+        message_decimal: *const c_char,
+        r_decimal: *const c_char,
+        out_ct: *mut *mut bicycl_cl_hsm2k_ct_t,
     ) -> bicycl_status_t;
 
     pub fn bicycl_paillier_new(

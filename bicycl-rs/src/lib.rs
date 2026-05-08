@@ -476,6 +476,130 @@ impl ClassGroup {
             _marker: PhantomData,
         })
     }
+
+    /// Returns the discriminant of this class group as a decimal string.
+    pub fn discriminant_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_classgroup_discriminant_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// NUCOMP: computes `f1 ∘ f2` and returns a new QFI.
+    pub fn nucomp(&self, ctx: &Context, f1: &Qfi, f2: &Qfi) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_classgroup_nucomp(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                f1.raw.as_ptr(),
+                f2.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_classgroup_nucomp returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// NUCOMPINV: computes `f1 ∘ f2⁻¹` and returns a new QFI.
+    pub fn nucompinv(&self, ctx: &Context, f1: &Qfi, f2: &Qfi) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_classgroup_nucompinv(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                f1.raw.as_ptr(),
+                f2.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_classgroup_nucompinv returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// NUPOW: computes `f^n` and returns a new QFI. `n_decimal` is the exponent as a decimal string.
+    pub fn nupow_decimal(&self, ctx: &Context, f: &Qfi, n_decimal: &str) -> Result<Qfi> {
+        let n_c = CString::new(n_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_classgroup_nupow_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                f.raw.as_ptr(),
+                n_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_classgroup_nupow_decimal returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Simultaneous double exponentiation: computes `f0^n0 * f1^n1` and returns a new QFI.
+    pub fn nupow2_decimal(
+        &self,
+        ctx: &Context,
+        f0: &Qfi,
+        n0_decimal: &str,
+        f1: &Qfi,
+        n1_decimal: &str,
+    ) -> Result<Qfi> {
+        let n0_c = CString::new(n0_decimal)?;
+        let n1_c = CString::new(n1_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_classgroup_nupow2_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                f0.raw.as_ptr(),
+                n0_c.as_ptr(),
+                f1.raw.as_ptr(),
+                n1_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_classgroup_nupow2_decimal returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Returns the prime form `(p, b, c)` for the given prime `p` (decimal string).
+    pub fn primeform_decimal(&self, ctx: &Context, p_decimal: &str) -> Result<Qfi> {
+        let p_c = CString::new(p_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_classgroup_primeform_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                p_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_classgroup_primeform_decimal returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
 }
 
 impl Drop for ClassGroup {
@@ -518,6 +642,123 @@ impl Qfi {
                 len,
             )
         })
+    }
+
+    /// Constructs a QFI from coefficients `(a, b, c)` given as decimal strings.
+    pub fn from_abc_decimal(ctx: &Context, a: &str, b: &str, c: &str) -> Result<Self> {
+        let a_c = CString::new(a)?;
+        let b_c = CString::new(b)?;
+        let c_c = CString::new(c)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_qfi_new_from_abc_decimal(
+                ctx.raw.as_ptr(),
+                a_c.as_ptr(),
+                b_c.as_ptr(),
+                c_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_qfi_new_from_abc_decimal returned null");
+        Ok(Self {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Returns the `a` coefficient as a decimal string.
+    pub fn a_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_qfi_a_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
+        })
+    }
+
+    /// Returns the `b` coefficient as a decimal string.
+    pub fn b_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_qfi_b_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
+        })
+    }
+
+    /// Returns the `c` coefficient as a decimal string.
+    pub fn c_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_qfi_c_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
+        })
+    }
+
+    /// Returns `true` if `self` and `other` represent the same class group element.
+    pub fn equal(&self, ctx: &Context, other: &Qfi) -> Result<bool> {
+        let mut out: c_int = 0;
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_qfi_equal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                other.raw.as_ptr(),
+                &mut out as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        Ok(out != 0)
+    }
+
+    /// Returns the inverse (negation) of this QFI element as a new allocation.
+    pub fn neg(&self, ctx: &Context) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_qfi_neg(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_qfi_neg returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Lifts this element in-place: maps from the order of conductor `M` to the maximal order.
+    ///
+    /// `conductor_decimal` is `M` (the conductor) as a decimal string.
+    pub fn lift_decimal(&mut self, ctx: &Context, conductor_decimal: &str) -> Result<()> {
+        let cond_c = CString::new(conductor_decimal)?;
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_qfi_lift_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                cond_c.as_ptr(),
+            )
+        };
+        status_to_result(status)
+    }
+
+    /// Maps this element in-place from `Cl_Delta` to `Cl_DeltaK` (the maximal order).
+    ///
+    /// `conductor_decimal` is `M`, `delta_k_decimal` is `ΔK`, both as decimal strings.
+    /// `to_neg` controls sign conventions; pass `false` for the standard direction.
+    pub fn to_maximal_order_decimal(
+        &mut self,
+        ctx: &Context,
+        conductor_decimal: &str,
+        delta_k_decimal: &str,
+        to_neg: bool,
+    ) -> Result<()> {
+        let cond_c = CString::new(conductor_decimal)?;
+        let dk_c = CString::new(delta_k_decimal)?;
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_qfi_to_maximal_order_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                cond_c.as_ptr(),
+                dk_c.as_ptr(),
+                to_neg as c_int,
+            )
+        };
+        status_to_result(status)
     }
 }
 
@@ -1011,11 +1252,264 @@ impl ClHsmqk {
             _marker: PhantomData,
         })
     }
+
+    // ── Parameter getters ────────────────────────────────────────────────────
+
+    /// Returns the prime `q` (subgroup order) as a decimal string.
+    pub fn q_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_q_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
+        })
+    }
+
+    /// Returns the class-group prime `p` as a decimal string.
+    pub fn p_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_p_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
+        })
+    }
+
+    /// Returns the conductor `M = q^k` as a decimal string.
+    #[allow(non_snake_case)]
+    pub fn M_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_M_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
+        })
+    }
+
+    /// Returns the maximal-order discriminant `ΔK` as a decimal string.
+    #[allow(non_snake_case)]
+    pub fn DeltaK_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_DeltaK_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// Returns the order-`M` discriminant `Δ = M² · ΔK` as a decimal string.
+    #[allow(non_snake_case)]
+    pub fn Delta_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_Delta_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// Returns the upper bound on secret key values as a decimal string.
+    pub fn secretkey_bound_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_secretkey_bound_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// Returns the class group `Cl(ΔK)` over the maximal order.
+    #[allow(non_snake_case)]
+    pub fn Cl_DeltaK(&self, ctx: &Context) -> Result<ClassGroup> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_Cl_DeltaK(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_Cl_DeltaK returned null");
+        Ok(ClassGroup {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Returns the class group `Cl(Δ)` over the order of conductor `M`.
+    #[allow(non_snake_case)]
+    pub fn Cl_Delta(&self, ctx: &Context) -> Result<ClassGroup> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_Cl_Delta(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_Cl_Delta returned null");
+        Ok(ClassGroup {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Returns the generator `h` of the hidden-order subgroup `H`.
+    pub fn h(&self, ctx: &Context) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_h(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_h returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    // ── Subgroup operations ──────────────────────────────────────────────────
+
+    /// Computes `h^e` (power of the hidden-order generator). `e_decimal` is the exponent.
+    pub fn power_of_h_decimal(&self, ctx: &Context, e_decimal: &str) -> Result<Qfi> {
+        let e_c = CString::new(e_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_power_of_h_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                e_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_power_of_h_decimal returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Computes the element `f^m` in the cyclic subgroup `F`. `m_decimal` is the message.
+    pub fn power_of_f_decimal(&self, ctx: &Context, m_decimal: &str) -> Result<Qfi> {
+        let m_c = CString::new(m_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_power_of_f_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                m_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_power_of_f_decimal returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Solves the discrete logarithm in the cyclic subgroup `F`: given `f^m`, returns `m` as a decimal string.
+    #[allow(non_snake_case)]
+    pub fn dlog_in_F(&self, ctx: &Context, fm: &Qfi) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_dlog_in_F(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                fm.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// Maps `f` in-place from `Cl(ΔK)` (maximal order) to `Cl(Δ)` (order of conductor `M`).
+    #[allow(non_snake_case)]
+    pub fn from_Cl_DeltaK_to_Cl_Delta(&self, ctx: &Context, f: &mut Qfi) -> Result<()> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_from_Cl_DeltaK_to_Cl_Delta(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                f.raw.as_ptr(),
+            )
+        };
+        status_to_result(status)
+    }
+
+    /// Encrypts a plaintext with an explicit randomness value `r` (deterministic encryption).
+    ///
+    /// Both `message_decimal` and `r_decimal` are decimal strings.
+    pub fn encrypt_decimal_with_r(
+        &self,
+        ctx: &Context,
+        pk: &ClHsmqkPublicKey,
+        message_decimal: &str,
+        r_decimal: &str,
+    ) -> Result<ClHsmqkCiphertext> {
+        let msg_c = CString::new(message_decimal)?;
+        let r_c = CString::new(r_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_encrypt_decimal_with_r(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                pk.raw.as_ptr(),
+                msg_c.as_ptr(),
+                r_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw =
+            NonNull::new(raw).expect("bicycl_cl_hsmqk_encrypt_decimal_with_r returned null");
+        Ok(ClHsmqkCiphertext {
+            raw,
+            _marker: PhantomData,
+        })
+    }
 }
 
 impl Drop for ClHsmqk {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_cl_hsmqk_free(self.raw.as_ptr()) }
+    }
+}
+
+impl ClHsmqkSecretKey {
+    /// Serialises this secret key as a decimal string.
+    pub fn to_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_sk_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// Deserialises a secret key from a decimal string.
+    pub fn from_decimal(ctx: &Context, cl: &ClHsmqk, sk_decimal: &str) -> Result<Self> {
+        let sk_c = CString::new(sk_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_sk_new_from_decimal(
+                ctx.raw.as_ptr(),
+                cl.raw.as_ptr(),
+                sk_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_sk_new_from_decimal returned null");
+        Ok(Self {
+            raw,
+            _marker: PhantomData,
+        })
     }
 }
 
@@ -1025,9 +1519,105 @@ impl Drop for ClHsmqkSecretKey {
     }
 }
 
+impl ClHsmqkPublicKey {
+    /// Returns the underlying QFI element of this public key.
+    pub fn elt(&self, ctx: &Context) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_pk_elt(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_pk_elt returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Constructs a public key from a QFI element.
+    pub fn from_qfi(ctx: &Context, cl: &ClHsmqk, qfi: &Qfi) -> Result<Self> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_pk_new_from_qfi(
+                ctx.raw.as_ptr(),
+                cl.raw.as_ptr(),
+                qfi.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_pk_new_from_qfi returned null");
+        Ok(Self {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+}
+
 impl Drop for ClHsmqkPublicKey {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_cl_hsmqk_pk_free(self.raw.as_ptr()) }
+    }
+}
+
+impl ClHsmqkCiphertext {
+    /// Returns the `c1` component (the randomness component `h^r`).
+    pub fn c1(&self, ctx: &Context) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_ct_c1(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_ct_c1 returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Returns the `c2` component (the encryption component `pk^r * f^m`).
+    pub fn c2(&self, ctx: &Context) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_ct_c2(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_ct_c2 returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Constructs a ciphertext from two QFI components `(c1, c2)`.
+    pub fn from_c1c2(ctx: &Context, c1: &Qfi, c2: &Qfi) -> Result<Self> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsmqk_ct_new_from_c1c2(
+                ctx.raw.as_ptr(),
+                c1.raw.as_ptr(),
+                c2.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsmqk_ct_new_from_c1c2 returned null");
+        Ok(Self {
+            raw,
+            _marker: PhantomData,
+        })
     }
 }
 
@@ -1241,11 +1831,256 @@ impl ClHsm2k {
             _marker: PhantomData,
         })
     }
+
+    // ── Parameter getters ────────────────────────────────────────────────────
+
+    /// Returns the composite modulus `N` as a decimal string.
+    #[allow(non_snake_case)]
+    pub fn N_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_N_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
+        })
+    }
+
+    /// Returns the conductor `M = 2^k` as a decimal string.
+    #[allow(non_snake_case)]
+    pub fn M_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_M_decimal(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
+        })
+    }
+
+    /// Returns the maximal-order discriminant `ΔK` as a decimal string.
+    #[allow(non_snake_case)]
+    pub fn DeltaK_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_DeltaK_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// Returns the order-`M` discriminant `Δ = M² · ΔK` as a decimal string.
+    #[allow(non_snake_case)]
+    pub fn Delta_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_Delta_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// Returns the upper bound on secret key values as a decimal string.
+    pub fn secretkey_bound_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_secretkey_bound_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// Returns the class group `Cl(ΔK)` over the maximal order.
+    #[allow(non_snake_case)]
+    pub fn Cl_DeltaK(&self, ctx: &Context) -> Result<ClassGroup> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_Cl_DeltaK(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_Cl_DeltaK returned null");
+        Ok(ClassGroup {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Returns the class group `Cl(Δ)` over the order of conductor `M`.
+    #[allow(non_snake_case)]
+    pub fn Cl_Delta(&self, ctx: &Context) -> Result<ClassGroup> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_Cl_Delta(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_Cl_Delta returned null");
+        Ok(ClassGroup {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Returns the generator `h` of the hidden-order subgroup `H`.
+    pub fn h(&self, ctx: &Context) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_h(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_h returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    // ── Subgroup operations ──────────────────────────────────────────────────
+
+    /// Computes `h^e` (power of the hidden-order generator). `e_decimal` is the exponent.
+    pub fn power_of_h_decimal(&self, ctx: &Context, e_decimal: &str) -> Result<Qfi> {
+        let e_c = CString::new(e_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_power_of_h_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                e_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_power_of_h_decimal returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Computes the element `f^m` in the cyclic subgroup `F`. `m_decimal` is the message.
+    pub fn power_of_f_decimal(&self, ctx: &Context, m_decimal: &str) -> Result<Qfi> {
+        let m_c = CString::new(m_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_power_of_f_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                m_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_power_of_f_decimal returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Solves the DLog in `F`: given `f^m`, returns `m` as a decimal string.
+    #[allow(non_snake_case)]
+    pub fn dlog_in_F(&self, ctx: &Context, fm: &Qfi) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_dlog_in_F(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                fm.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// Maps `f` in-place from `Cl(ΔK)` (maximal order) to `Cl(Δ)` (order of conductor `M`).
+    #[allow(non_snake_case)]
+    pub fn from_Cl_DeltaK_to_Cl_Delta(&self, ctx: &Context, f: &mut Qfi) -> Result<()> {
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_from_Cl_DeltaK_to_Cl_Delta(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                f.raw.as_ptr(),
+            )
+        };
+        status_to_result(status)
+    }
+
+    /// Encrypts a plaintext with an explicit randomness value `r` (deterministic encryption).
+    pub fn encrypt_decimal_with_r(
+        &self,
+        ctx: &Context,
+        pk: &ClHsm2kPublicKey,
+        message_decimal: &str,
+        r_decimal: &str,
+    ) -> Result<ClHsm2kCiphertext> {
+        let msg_c = CString::new(message_decimal)?;
+        let r_c = CString::new(r_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_encrypt_decimal_with_r(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                pk.raw.as_ptr(),
+                msg_c.as_ptr(),
+                r_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw =
+            NonNull::new(raw).expect("bicycl_cl_hsm2k_encrypt_decimal_with_r returned null");
+        Ok(ClHsm2kCiphertext {
+            raw,
+            _marker: PhantomData,
+        })
+    }
 }
 
 impl Drop for ClHsm2k {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_cl_hsm2k_free(self.raw.as_ptr()) }
+    }
+}
+
+impl ClHsm2kSecretKey {
+    /// Serialises this secret key as a decimal string.
+    pub fn to_decimal(&self, ctx: &Context) -> Result<String> {
+        ffi_string_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_sk_decimal(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                buf,
+                len,
+            )
+        })
+    }
+
+    /// Deserialises a secret key from a decimal string.
+    pub fn from_decimal(ctx: &Context, cl: &ClHsm2k, sk_decimal: &str) -> Result<Self> {
+        let sk_c = CString::new(sk_decimal)?;
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_sk_new_from_decimal(
+                ctx.raw.as_ptr(),
+                cl.raw.as_ptr(),
+                sk_c.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_sk_new_from_decimal returned null");
+        Ok(Self {
+            raw,
+            _marker: PhantomData,
+        })
     }
 }
 
@@ -1255,9 +2090,105 @@ impl Drop for ClHsm2kSecretKey {
     }
 }
 
+impl ClHsm2kPublicKey {
+    /// Returns the underlying QFI element of this public key.
+    pub fn elt(&self, ctx: &Context) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_pk_elt(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_pk_elt returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Constructs a public key from a QFI element.
+    pub fn from_qfi(ctx: &Context, cl: &ClHsm2k, qfi: &Qfi) -> Result<Self> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_pk_new_from_qfi(
+                ctx.raw.as_ptr(),
+                cl.raw.as_ptr(),
+                qfi.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_pk_new_from_qfi returned null");
+        Ok(Self {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+}
+
 impl Drop for ClHsm2kPublicKey {
     fn drop(&mut self) {
         unsafe { bicycl_rs_sys::bicycl_cl_hsm2k_pk_free(self.raw.as_ptr()) }
+    }
+}
+
+impl ClHsm2kCiphertext {
+    /// Returns the `c1` component (the randomness component `h^r`).
+    pub fn c1(&self, ctx: &Context) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_ct_c1(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_ct_c1 returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Returns the `c2` component (the encryption component `pk^r * f^m`).
+    pub fn c2(&self, ctx: &Context) -> Result<Qfi> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_ct_c2(
+                ctx.raw.as_ptr(),
+                self.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_ct_c2 returned null");
+        Ok(Qfi {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Constructs a ciphertext from two QFI components `(c1, c2)`.
+    pub fn from_c1c2(ctx: &Context, c1: &Qfi, c2: &Qfi) -> Result<Self> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_cl_hsm2k_ct_new_from_c1c2(
+                ctx.raw.as_ptr(),
+                c1.raw.as_ptr(),
+                c2.raw.as_ptr(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_cl_hsm2k_ct_new_from_c1c2 returned null");
+        Ok(Self {
+            raw,
+            _marker: PhantomData,
+        })
     }
 }
 

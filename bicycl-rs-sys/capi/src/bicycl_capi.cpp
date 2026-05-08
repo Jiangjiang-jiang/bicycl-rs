@@ -633,6 +633,1223 @@ bicycl_status_t bicycl_qfi_discriminant_decimal(
   }
 }
 
+// ── QFI additional ──────────────────────────────────────────────────────
+
+bicycl_status_t bicycl_qfi_new_from_abc_decimal(
+    bicycl_context_t *ctx, const char *a, const char *b, const char *c,
+    bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || a == nullptr || b == nullptr || c == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz a_mpz = parse_decimal(ctx, a, "a", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::Mpz b_mpz = parse_decimal(ctx, b, "b", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::Mpz c_mpz = parse_decimal(ctx, c, "c", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::QFI qfi_val(a_mpz, b_mpz, c_mpz, true);
+    *out = new bicycl_qfi_t(qfi_val);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_qfi_a_decimal(
+    bicycl_context_t *ctx, const bicycl_qfi_t *qfi, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || qfi == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(qfi->value.a()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_qfi_b_decimal(
+    bicycl_context_t *ctx, const bicycl_qfi_t *qfi, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || qfi == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(qfi->value.b()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_qfi_c_decimal(
+    bicycl_context_t *ctx, const bicycl_qfi_t *qfi, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || qfi == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(qfi->value.c()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_qfi_equal(
+    bicycl_context_t *ctx, const bicycl_qfi_t *a, const bicycl_qfi_t *b, int *out) {
+  clear_error(ctx);
+  if (ctx == nullptr || a == nullptr || b == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    *out = (a->value == b->value) ? 1 : 0;
+    return BICYCL_OK;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_qfi_neg(
+    bicycl_context_t *ctx, const bicycl_qfi_t *qfi, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || qfi == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    BICYCL::QFI copy = qfi->value;
+    copy.neg();
+    *out = new bicycl_qfi_t(copy);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_qfi_lift_decimal(
+    bicycl_context_t *ctx, bicycl_qfi_t *qfi, const char *conductor_decimal) {
+  clear_error(ctx);
+  if (ctx == nullptr || qfi == nullptr || conductor_decimal == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz conductor = parse_decimal(ctx, conductor_decimal, "conductor_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    qfi->value.lift(conductor);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_qfi_to_maximal_order_decimal(
+    bicycl_context_t *ctx, bicycl_qfi_t *qfi,
+    const char *conductor_decimal, const char *DeltaK_decimal, int to_neg) {
+  clear_error(ctx);
+  if (ctx == nullptr || qfi == nullptr || conductor_decimal == nullptr || DeltaK_decimal == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz conductor = parse_decimal(ctx, conductor_decimal, "conductor_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::Mpz DeltaK = parse_decimal(ctx, DeltaK_decimal, "DeltaK_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    qfi->value.to_maximal_order(conductor, DeltaK, to_neg != 0);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CORE;
+  }
+}
+
+// ── ClassGroup additional ────────────────────────────────────────────────
+
+bicycl_status_t bicycl_classgroup_discriminant_decimal(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cg == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cg->value.discriminant()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_classgroup_nucomp(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg,
+    const bicycl_qfi_t *f1, const bicycl_qfi_t *f2, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cg == nullptr || f1 == nullptr || f2 == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    BICYCL::QFI r;
+    cg->value.nucomp(r, f1->value, f2->value);
+    *out = new bicycl_qfi_t(r);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_classgroup_nucompinv(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg,
+    const bicycl_qfi_t *f1, const bicycl_qfi_t *f2, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cg == nullptr || f1 == nullptr || f2 == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    BICYCL::QFI r;
+    cg->value.nucompinv(r, f1->value, f2->value);
+    *out = new bicycl_qfi_t(r);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_classgroup_nupow_decimal(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg,
+    const bicycl_qfi_t *f, const char *n_decimal, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cg == nullptr || f == nullptr || n_decimal == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz n = parse_decimal(ctx, n_decimal, "n_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::QFI r;
+    cg->value.nupow(r, f->value, n);
+    *out = new bicycl_qfi_t(r);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_classgroup_nupow2_decimal(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg,
+    const bicycl_qfi_t *f0, const char *n0_decimal,
+    const bicycl_qfi_t *f1, const char *n1_decimal, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cg == nullptr || f0 == nullptr || n0_decimal == nullptr ||
+      f1 == nullptr || n1_decimal == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz n0 = parse_decimal(ctx, n0_decimal, "n0_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::Mpz n1 = parse_decimal(ctx, n1_decimal, "n1_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::QFI r;
+    cg->value.nupow(r, f0->value, n0, f1->value, n1);
+    *out = new bicycl_qfi_t(r);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_classgroup_primeform_decimal(
+    bicycl_context_t *ctx, const bicycl_classgroup_t *cg,
+    const char *p_decimal, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cg == nullptr || p_decimal == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz p = parse_decimal(ctx, p_decimal, "p_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    *out = new bicycl_qfi_t(cg->value.primeform(p));
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  }
+}
+
+// ── CL_HSMqk parameters ──────────────────────────────────────────────────
+
+bicycl_status_t bicycl_cl_hsmqk_q_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.q()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_p_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.p()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_M_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.M()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_DeltaK_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.DeltaK()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_Delta_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.Delta()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_secretkey_bound_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.secretkey_bound()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_Cl_DeltaK(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, bicycl_classgroup_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_classgroup_t(cl->value.Cl_DeltaK().discriminant());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_Cl_Delta(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, bicycl_classgroup_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_classgroup_t(cl->value.Cl_Delta().discriminant());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_h(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_qfi_t(cl->value.h());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+// ── CL_HSMqk subgroup operations ─────────────────────────────────────────
+
+bicycl_status_t bicycl_cl_hsmqk_power_of_h_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const char *e_decimal, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || e_decimal == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz e = parse_decimal(ctx, e_decimal, "e_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::QFI r;
+    cl->value.power_of_h(r, e);
+    *out = new bicycl_qfi_t(r);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_power_of_f_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const char *m_decimal, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || m_decimal == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz m = parse_decimal(ctx, m_decimal, "m_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    *out = new bicycl_qfi_t(cl->value.power_of_f(m));
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_dlog_in_F(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const bicycl_qfi_t *fm, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || fm == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    BICYCL::Mpz result = cl->value.dlog_in_F(fm->value);
+    return write_c_string(ctx, mpz_to_string(result), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_from_Cl_DeltaK_to_Cl_Delta(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl, bicycl_qfi_t *f) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || f == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    cl->value.from_Cl_DeltaK_to_Cl_Delta(f->value);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+// ── CL_HSMqk key/ciphertext access ───────────────────────────────────────
+
+bicycl_status_t bicycl_cl_hsmqk_pk_elt(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_pk_t *pk, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || pk == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_qfi_t(pk->value.elt());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_pk_new_from_qfi(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const bicycl_qfi_t *qfi, bicycl_cl_hsmqk_pk_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || qfi == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    *out = new bicycl_cl_hsmqk_pk_t(BICYCL::CL_HSMqk::PublicKey(cl->value, qfi->value));
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_ct_c1(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_ct_t *ct, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || ct == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_qfi_t(ct->value.c1());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_ct_c2(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_ct_t *ct, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || ct == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_qfi_t(ct->value.c2());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_ct_new_from_c1c2(
+    bicycl_context_t *ctx, const bicycl_qfi_t *c1, const bicycl_qfi_t *c2,
+    bicycl_cl_hsmqk_ct_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || c1 == nullptr || c2 == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    *out = new bicycl_cl_hsmqk_ct_t(BICYCL::CL_HSMqk::CipherText(c1->value, c2->value));
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_sk_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_sk_t *sk, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || sk == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(static_cast<const BICYCL::Mpz &>(sk->value)), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_sk_new_from_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const char *sk_decimal, bicycl_cl_hsmqk_sk_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || sk_decimal == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz mpz_val = parse_decimal(ctx, sk_decimal, "sk_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::CL_HSMqk::SecretKey sk(cl->value, mpz_val);
+    *out = new bicycl_cl_hsmqk_sk_t(sk);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsmqk_encrypt_decimal_with_r(
+    bicycl_context_t *ctx, const bicycl_cl_hsmqk_t *cl,
+    const bicycl_cl_hsmqk_pk_t *pk, const char *message_decimal,
+    const char *r_decimal, bicycl_cl_hsmqk_ct_t **out_ct) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || pk == nullptr || message_decimal == nullptr ||
+      r_decimal == nullptr || out_ct == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz message = parse_decimal(ctx, message_decimal, "message_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::Mpz r = parse_decimal(ctx, r_decimal, "r_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::CL_HSMqk::ClearText clear(cl->value, message);
+    BICYCL::CL_HSMqk::CipherText ct = cl->value.encrypt(pk->value, clear, r);
+    *out_ct = new bicycl_cl_hsmqk_ct_t(ct);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out_ct = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out_ct = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out_ct = nullptr;
+    return BICYCL_ERR_CL_HSMQK;
+  }
+}
+
+// ── CL_HSM2k parameters ──────────────────────────────────────────────────
+
+bicycl_status_t bicycl_cl_hsm2k_N_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.N()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_M_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.M()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_DeltaK_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.DeltaK()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_Delta_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.Delta()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_secretkey_bound_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(cl->value.secretkey_bound()), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_Cl_DeltaK(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, bicycl_classgroup_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_classgroup_t(cl->value.Cl_DeltaK().discriminant());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_Cl_Delta(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, bicycl_classgroup_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_classgroup_t(cl->value.Cl_Delta().discriminant());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_h(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_qfi_t(cl->value.h());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_power_of_h_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const char *e_decimal, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || e_decimal == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz e = parse_decimal(ctx, e_decimal, "e_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::QFI r;
+    cl->value.power_of_h(r, e);
+    *out = new bicycl_qfi_t(r);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_power_of_f_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const char *m_decimal, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || m_decimal == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz m = parse_decimal(ctx, m_decimal, "m_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    *out = new bicycl_qfi_t(cl->value.power_of_f(m));
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_dlog_in_F(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const bicycl_qfi_t *fm, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || fm == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    BICYCL::Mpz result = cl->value.dlog_in_F(fm->value);
+    return write_c_string(ctx, mpz_to_string(result), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_from_Cl_DeltaK_to_Cl_Delta(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl, bicycl_qfi_t *f) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || f == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    cl->value.from_Cl_DeltaK_to_Cl_Delta(f->value);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_pk_elt(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_pk_t *pk, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || pk == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_qfi_t(pk->value.elt());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_pk_new_from_qfi(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const bicycl_qfi_t *qfi, bicycl_cl_hsm2k_pk_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || qfi == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    *out = new bicycl_cl_hsm2k_pk_t(BICYCL::CL_HSM2k::PublicKey(cl->value, qfi->value));
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_ct_c1(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_ct_t *ct, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || ct == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_qfi_t(ct->value.c1());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_ct_c2(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_ct_t *ct, bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || ct == nullptr || out == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    *out = new bicycl_qfi_t(ct->value.c2());
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_ct_new_from_c1c2(
+    bicycl_context_t *ctx, const bicycl_qfi_t *c1, const bicycl_qfi_t *c2,
+    bicycl_cl_hsm2k_ct_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || c1 == nullptr || c2 == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    *out = new bicycl_cl_hsm2k_ct_t(BICYCL::CL_HSM2k::CipherText(c1->value, c2->value));
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_sk_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_sk_t *sk, char *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || sk == nullptr) { return BICYCL_ERR_NULL_PTR; }
+  try {
+    return write_c_string(ctx, mpz_to_string(static_cast<const BICYCL::Mpz &>(sk->value)), out_buf, inout_len);
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_sk_new_from_decimal(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const char *sk_decimal, bicycl_cl_hsm2k_sk_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || sk_decimal == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz mpz_val = parse_decimal(ctx, sk_decimal, "sk_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::CL_HSM2k::SecretKey sk(cl->value, mpz_val);
+    *out = new bicycl_cl_hsm2k_sk_t(sk);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
+bicycl_status_t bicycl_cl_hsm2k_encrypt_decimal_with_r(
+    bicycl_context_t *ctx, const bicycl_cl_hsm2k_t *cl,
+    const bicycl_cl_hsm2k_pk_t *pk, const char *message_decimal,
+    const char *r_decimal, bicycl_cl_hsm2k_ct_t **out_ct) {
+  clear_error(ctx);
+  if (ctx == nullptr || cl == nullptr || pk == nullptr || message_decimal == nullptr ||
+      r_decimal == nullptr || out_ct == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    bicycl_status_t status = BICYCL_OK;
+    BICYCL::Mpz message = parse_decimal(ctx, message_decimal, "message_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::Mpz r = parse_decimal(ctx, r_decimal, "r_decimal", &status);
+    if (status != BICYCL_OK) { return status; }
+    BICYCL::CL_HSM2k::ClearText clear(cl->value, message);
+    BICYCL::CL_HSM2k::CipherText ct = cl->value.encrypt(pk->value, clear, r);
+    *out_ct = new bicycl_cl_hsm2k_ct_t(ct);
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out_ct = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out_ct = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out_ct = nullptr;
+    return BICYCL_ERR_CL_HSM2K;
+  }
+}
+
 bicycl_status_t bicycl_paillier_new(
     bicycl_context_t *ctx,
     uint32_t modulus_bits,
