@@ -25,7 +25,11 @@ jobs:
       - name: Publish bicycl-rs-sys
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo publish -p bicycl-rs-sys
+        run: |
+          out=$(cargo publish -p bicycl-rs-sys 2>&1) && echo "$out" && exit 0
+          echo "$out"
+          echo "$out" | grep -q "already uploaded" && echo "Already published, skipping." && exit 0
+          exit 1
 
       - name: Wait for crates.io index
         run: |
@@ -44,4 +48,8 @@ jobs:
       - name: Publish bicycl-rs
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo publish -p bicycl-rs
+        run: |
+          out=$(cargo publish -p bicycl-rs 2>&1) && echo "$out" && exit 0
+          echo "$out"
+          echo "$out" | grep -q "already uploaded" && echo "Already published, skipping." && exit 0
+          exit 1
