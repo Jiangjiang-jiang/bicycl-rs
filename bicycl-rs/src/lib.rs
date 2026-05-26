@@ -15,8 +15,14 @@
 //!
 //! # Thread safety
 //!
-//! The underlying C library is **not** thread-safe.  All wrapper types are
-//! `!Send + !Sync` and must be used from a single thread.
+//! The underlying C library is **not** thread-safe.  [`Context`] and [`RandGen`]
+//! are `!Send + !Sync` and must be used from a single thread.
+//!
+//! Independent data objects (keys, ciphertexts, [`Qfi`] elements) own their
+//! data and do not reference [`Context`] memory.  They implement `Send` so
+//! they can be stored in key shares and moved across threads.  However, all
+//! *operations* on these objects still require a `&Context`, which pins them
+//! to the thread that owns the context during use.
 //!
 //! # License
 //!
@@ -3099,3 +3105,45 @@ impl Drop for EcdsaSignature {
         unsafe { bicycl_rs_sys::bicycl_ecdsa_sig_free(self.raw.as_ptr()) }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Send impls for independent data types
+// ---------------------------------------------------------------------------
+//
+// These types own their data independently (each wraps a heap-allocated C
+// object with its own `_free` destructor) and do NOT hold pointers into
+// Context memory.  They can safely be moved between threads.
+//
+// Context and RandGen remain !Send because they contain thread-local state
+// (error sink, PRNG state).  Scheme objects (ClHsmqk, Paillier, etc.)
+// remain !Send because operations on them require &Context.
+
+// Class group elements
+// SAFETY: Qfi owns its data via NonNull + Drop.  No aliased pointers.
+unsafe impl Send for Qfi {}
+
+// CL-HSMqk keys and ciphertexts
+// SAFETY: Each owns its data independently via NonNull + Drop.
+unsafe impl Send for ClHsmqkSecretKey {}
+unsafe impl Send for ClHsmqkPublicKey {}
+unsafe impl Send for ClHsmqkCiphertext {}
+
+// CL-HSM2k keys and ciphertexts
+unsafe impl Send for ClHsm2kSecretKey {}
+unsafe impl Send for ClHsm2kPublicKey {}
+unsafe impl Send for ClHsm2kCiphertext {}
+
+// Paillier keys and ciphertexts
+unsafe impl Send for PaillierSecretKey {}
+unsafe impl Send for PaillierPublicKey {}
+unsafe impl Send for PaillierCiphertext {}
+
+// Joye-Libert keys and ciphertexts
+unsafe impl Send for JoyeLibertSecretKey {}
+unsafe impl Send for JoyeLibertPublicKey {}
+unsafe impl Send for JoyeLibertCiphertext {}
+
+// ECDSA keys and signatures
+unsafe impl Send for EcdsaSecretKey {}
+unsafe impl Send for EcdsaPublicKey {}
+unsafe impl Send for EcdsaSignature {}
