@@ -28,7 +28,7 @@ jobs:
         run: |
           out=$(cargo publish -p bicycl-rs-sys 2>&1) && echo "$out" && exit 0
           echo "$out"
-          echo "$out" | grep -q "already uploaded" && echo "Already published, skipping." && exit 0
+          echo "$out" | grep -qE "already uploaded|already exists on crates.io index" && echo "Already published, skipping." && exit 0
           exit 1
 
       - name: Wait for crates.io index
@@ -51,5 +51,5 @@ jobs:
         run: |
           out=$(cargo publish -p bicycl-rs 2>&1) && echo "$out" && exit 0
           echo "$out"
-          echo "$out" | grep -q "already uploaded" && echo "Already published, skipping." && exit 0
+          echo "$out" | grep -qE "already uploaded|already exists on crates.io index" && echo "Already published, skipping." && exit 0
           exit 1
