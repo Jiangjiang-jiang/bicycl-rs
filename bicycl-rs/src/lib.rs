@@ -15,14 +15,15 @@
 //!
 //! # Thread safety
 //!
-//! The underlying C library is **not** thread-safe.  [`Context`] and [`RandGen`]
-//! are `!Send + !Sync` and must be used from a single thread.
+//! All types implement `Send` (can be moved between threads) but **not**
+//! `Sync` (cannot be shared via `&T` across threads).  This is safe because
+//! BICYCL does not use thread-local storage; each object is a self-contained
+//! heap allocation.  The `!Sync` constraint prevents concurrent access to
+//! [`Context`]'s error buffer and [`RandGen`]'s PRNG state.
 //!
-//! Independent data objects (keys, ciphertexts, [`Qfi`] elements) own their
-//! data and do not reference [`Context`] memory.  They implement `Send` so
-//! they can be stored in key shares and moved across threads.  However, all
-//! *operations* on these objects still require a `&Context`, which pins them
-//! to the thread that owns the context during use.
+//! In practice: you can store keys, ciphertexts, and even [`Context`] in
+//! structs that are moved between threads (e.g., async tasks), but you must
+//! not share a `&Context` across threads simultaneously.
 //!
 //! # License
 //!
@@ -139,8 +140,9 @@ pub fn zeroize(buf: &mut [u8]) {
 /// All derived objects (`RandGen`, scheme instances, keys, ciphertexts, etc.)
 /// own their data independently and do **not** hold pointers into the context's
 /// memory, so their drop order relative to `Context` does not affect memory
-/// safety.  `Context` is `!Send + !Sync` because the underlying C library is
-/// not thread-safe; all objects must be used from a single thread.
+/// safety.  `Context` is `Send` (can move between threads) but `!Sync`
+/// (cannot be shared via `&Context` across threads) because the error
+/// buffer is not protected against concurrent writes.
 #[derive(Debug)]
 pub struct Context {
     raw: NonNull<bicycl_rs_sys::bicycl_context_t>,
@@ -3107,16 +3109,31 @@ impl Drop for EcdsaSignature {
 }
 
 // ---------------------------------------------------------------------------
-// Send impls for independent data types
+// Send impls
 // ---------------------------------------------------------------------------
 //
-// These types own their data independently (each wraps a heap-allocated C
-// object with its own `_free` destructor) and do NOT hold pointers into
-// Context memory.  They can safely be moved between threads.
+// All types below own their heap-allocated C objects exclusively (NonNull +
+// Drop destructor).  BICYCL does not use thread-local storage, so moving
+// these objects between threads is safe.
 //
-// Context and RandGen remain !Send because they contain thread-local state
-// (error sink, PRNG state).  Scheme objects (ClHsmqk, Paillier, etc.)
-// remain !Send because operations on them require &Context.
+// IMPORTANT: we impl Send but NOT Sync.  Send allows ownership transfer
+// between threads (safe: exclusive access).  Sync would allow shared
+// references (&T) across threads, which is unsafe because Context's error
+// buffer and RandGen's PRNG state are not protected against concurrent
+// writes.
+
+// Context and RandGen: Send (can move between threads) but NOT Sync.
+// SAFETY: Heap-allocated C objects, no TLS, no thread-ID binding.
+// Only one thread owns the Context at a time (guaranteed by Send semantics).
+unsafe impl Send for Context {}
+unsafe impl Send for RandGen {}
+
+// Scheme instances: Send but NOT Sync (operations require &mut Context).
+unsafe impl Send for ClHsmqk {}
+unsafe impl Send for ClHsm2k {}
+unsafe impl Send for Paillier {}
+unsafe impl Send for JoyeLibert {}
+unsafe impl Send for Ecdsa {}
 
 // Class group elements
 // SAFETY: Qfi owns its data via NonNull + Drop.  No aliased pointers.
