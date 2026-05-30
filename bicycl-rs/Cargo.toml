@@ -1,6 +1,6 @@
 [package]
 name = "bicycl-rs"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 authors.workspace = true
 license.workspace = true
@@ -21,7 +21,7 @@ keywords = ["crypto", "class-group", "bicycl"]
 categories = ["cryptography", "api-bindings"]
 
 [dependencies]
-bicycl-rs-sys = { path = "../bicycl-rs-sys", version = "0.2.0" }
+bicycl-rs-sys = { path = "../bicycl-rs-sys", version = "0.2.1" }
 thiserror = "2"
 
 [lints]
