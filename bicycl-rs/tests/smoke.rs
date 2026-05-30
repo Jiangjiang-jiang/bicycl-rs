@@ -574,6 +574,88 @@ fn joye_libert_k16_plaintext_space() {
     }
 }
 
+// ── QFI binary serialization roundtrip ────────────────────────────────────────
+
+#[test]
+fn qfi_bytes_roundtrip_identity() {
+    let ctx = Context::new().unwrap();
+    let cg = ctx.classgroup_from_discriminant_decimal("-23").unwrap();
+    let one = cg.one(&ctx).unwrap();
+
+    let bytes = one.to_bytes(&ctx).unwrap();
+    let restored = bicycl_rs::Qfi::from_bytes(&ctx, &bytes).unwrap();
+    assert!(one.equal(&ctx, &restored).unwrap());
+}
+
+#[test]
+fn qfi_bytes_roundtrip_nontrivial() {
+    let ctx = Context::new().unwrap();
+    let mut rng = ctx.randgen_from_seed_decimal("8888").unwrap();
+
+    let cl = ctx.cl_hsmqk("3", 1, "5").unwrap();
+    let (_, pk) = cl.keygen(&ctx, &mut rng).unwrap();
+    let pk_elt = pk.elt(&ctx).unwrap();
+
+    let bytes = pk_elt.to_bytes(&ctx).unwrap();
+    let restored = bicycl_rs::Qfi::from_bytes(&ctx, &bytes).unwrap();
+    assert!(pk_elt.equal(&ctx, &restored).unwrap());
+
+    let a_orig = pk_elt.a_decimal(&ctx).unwrap();
+    let b_orig = pk_elt.b_decimal(&ctx).unwrap();
+    let c_orig = pk_elt.c_decimal(&ctx).unwrap();
+    let a_rest = restored.a_decimal(&ctx).unwrap();
+    let b_rest = restored.b_decimal(&ctx).unwrap();
+    let c_rest = restored.c_decimal(&ctx).unwrap();
+    assert_eq!(a_orig, a_rest);
+    assert_eq!(b_orig, b_rest);
+    assert_eq!(c_orig, c_rest);
+}
+
+#[test]
+fn qfi_bytes_roundtrip_ciphertext_components() {
+    let ctx = Context::new().unwrap();
+    let mut rng = ctx.randgen_from_seed_decimal("9876").unwrap();
+
+    let cl = ctx.cl_hsmqk("3", 1, "5").unwrap();
+    let (_, pk) = cl.keygen(&ctx, &mut rng).unwrap();
+    let ct = cl.encrypt_decimal(&ctx, &pk, &mut rng, "2").unwrap();
+
+    let c1 = ct.c1(&ctx).unwrap();
+    let c2 = ct.c2(&ctx).unwrap();
+
+    for (label, qfi) in [("c1", &c1), ("c2", &c2)] {
+        let bytes = qfi.to_bytes(&ctx).unwrap();
+        let restored = bicycl_rs::Qfi::from_bytes(&ctx, &bytes).unwrap();
+        assert!(
+            qfi.equal(&ctx, &restored).unwrap(),
+            "{label} roundtrip mismatch"
+        );
+    }
+}
+
+#[test]
+fn qfi_bytes_rejects_trailing_data() {
+    let ctx = Context::new().unwrap();
+    let cg = ctx.classgroup_from_discriminant_decimal("-23").unwrap();
+    let one = cg.one(&ctx).unwrap();
+
+    let mut bytes = one.to_bytes(&ctx).unwrap();
+    bytes.push(0xff);
+    assert!(bicycl_rs::Qfi::from_bytes(&ctx, &bytes).is_err());
+}
+
+#[test]
+fn qfi_bytes_rejects_truncated_data() {
+    let ctx = Context::new().unwrap();
+    let cg = ctx.classgroup_from_discriminant_decimal("-23").unwrap();
+    let one = cg.one(&ctx).unwrap();
+
+    let bytes = one.to_bytes(&ctx).unwrap();
+    if bytes.len() > 1 {
+        assert!(bicycl_rs::Qfi::from_bytes(&ctx, &bytes[..bytes.len() - 1]).is_err());
+    }
+}
+
 // ── Threshold ECDSA additional configurations ─────────────────────────────────
 
 /// Upstream test_CL_threshold.cpp covers (n,t) pairs including (5,2), (7,4),

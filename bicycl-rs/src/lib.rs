@@ -696,6 +696,35 @@ impl Qfi {
         })
     }
 
+    /// Serializes this QFI to a compact binary representation.
+    ///
+    /// Each coefficient `(a, b, c)` is encoded as `[sign: 1B][len: 4B BE][abs bytes: len B]`.
+    /// Sign byte: `0x00` = zero, `0x01` = positive, `0xff` = negative.
+    pub fn to_bytes(&self, ctx: &Context) -> Result<Vec<u8>> {
+        ffi_bytes_from_len(|buf, len| unsafe {
+            bicycl_rs_sys::bicycl_qfi_to_bytes(ctx.raw.as_ptr(), self.raw.as_ptr(), buf, len)
+        })
+    }
+
+    /// Deserializes a QFI from the binary format produced by [`to_bytes`](Self::to_bytes).
+    pub fn from_bytes(ctx: &Context, data: &[u8]) -> Result<Self> {
+        let mut raw = std::ptr::null_mut();
+        let status = unsafe {
+            bicycl_rs_sys::bicycl_qfi_from_bytes(
+                ctx.raw.as_ptr(),
+                data.as_ptr(),
+                data.len(),
+                &mut raw as *mut _,
+            )
+        };
+        status_to_result(status)?;
+        let raw = NonNull::new(raw).expect("bicycl_qfi_from_bytes returned null");
+        Ok(Self {
+            raw,
+            _marker: PhantomData,
+        })
+    }
+
     /// Returns `true` if `self` and `other` represent the same class group element.
     pub fn equal(&self, ctx: &Context, other: &Qfi) -> Result<bool> {
         let mut out: c_int = 0;

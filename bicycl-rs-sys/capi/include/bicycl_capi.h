@@ -124,6 +124,14 @@ bicycl_status_t bicycl_qfi_b_decimal(
 bicycl_status_t bicycl_qfi_c_decimal(
     bicycl_context_t *ctx, const bicycl_qfi_t *qfi, char *out_buf, size_t *inout_len);
 
+bicycl_status_t bicycl_qfi_to_bytes(
+    bicycl_context_t *ctx, const bicycl_qfi_t *qfi,
+    uint8_t *out_buf, size_t *inout_len);
+
+bicycl_status_t bicycl_qfi_from_bytes(
+    bicycl_context_t *ctx, const uint8_t *data, size_t len,
+    bicycl_qfi_t **out);
+
 bicycl_status_t bicycl_qfi_equal(
     bicycl_context_t *ctx, const bicycl_qfi_t *a, const bicycl_qfi_t *b, int *out);
 

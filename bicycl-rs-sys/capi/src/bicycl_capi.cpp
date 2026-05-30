@@ -713,6 +713,124 @@ bicycl_status_t bicycl_qfi_c_decimal(
   }
 }
 
+// ── QFI binary serialization helpers ────────────────────────────────────
+//
+// Wire format per Mpz component: [sign: 1 byte][len: 4 bytes BE][abs bytes: len bytes]
+//   sign: 0x00 = zero, 0x01 = positive, 0xff = negative
+// A QFI is serialized as three consecutive components (a, b, c).
+
+static void mpz_to_binary(const BICYCL::Mpz &v, std::vector<uint8_t> &out) {
+  int s = v.sgn();
+  if (s == 0) {
+    out.push_back(0x00);
+    out.push_back(0); out.push_back(0); out.push_back(0); out.push_back(0);
+    return;
+  }
+  out.push_back(s > 0 ? 0x01 : 0xff);
+  auto abs_bytes = static_cast<std::vector<unsigned char>>(v);
+  // For negative values, operator vector<unsigned char> exports abs value
+  // (mpz_export uses absolute value), which is what we want.
+  uint32_t len = static_cast<uint32_t>(abs_bytes.size());
+  out.push_back(static_cast<uint8_t>((len >> 24) & 0xff));
+  out.push_back(static_cast<uint8_t>((len >> 16) & 0xff));
+  out.push_back(static_cast<uint8_t>((len >> 8) & 0xff));
+  out.push_back(static_cast<uint8_t>(len & 0xff));
+  out.insert(out.end(), abs_bytes.begin(), abs_bytes.end());
+}
+
+static bool mpz_from_binary(const uint8_t *data, size_t data_len, size_t &offset, BICYCL::Mpz &out) {
+  if (offset + 5 > data_len) return false;
+  uint8_t sign_byte = data[offset++];
+  uint32_t len = (static_cast<uint32_t>(data[offset]) << 24)
+               | (static_cast<uint32_t>(data[offset+1]) << 16)
+               | (static_cast<uint32_t>(data[offset+2]) << 8)
+               | static_cast<uint32_t>(data[offset+3]);
+  offset += 4;
+  if (sign_byte == 0x00) {
+    if (len != 0) return false;
+    out = BICYCL::Mpz(0UL);
+    return true;
+  }
+  if (offset + len > data_len) return false;
+  std::vector<unsigned char> abs_bytes(data + offset, data + offset + len);
+  offset += len;
+  out = abs_bytes;  // uses Mpz::operator=(const vector<unsigned char>&) — imports as positive
+  if (sign_byte == 0xff) {
+    out.neg();
+  } else if (sign_byte != 0x01) {
+    return false;
+  }
+  return true;
+}
+
+bicycl_status_t bicycl_qfi_to_bytes(
+    bicycl_context_t *ctx, const bicycl_qfi_t *qfi,
+    uint8_t *out_buf, size_t *inout_len) {
+  clear_error(ctx);
+  if (ctx == nullptr || qfi == nullptr || inout_len == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    std::vector<uint8_t> buf;
+    buf.reserve(512);
+    mpz_to_binary(qfi->value.a(), buf);
+    mpz_to_binary(qfi->value.b(), buf);
+    mpz_to_binary(qfi->value.c(), buf);
+
+    if (out_buf == nullptr || *inout_len < buf.size()) {
+      *inout_len = buf.size();
+      set_error(ctx, "output buffer too small");
+      return BICYCL_ERR_BUFFER_TOO_SMALL;
+    }
+    std::copy(buf.begin(), buf.end(), out_buf);
+    *inout_len = buf.size();
+    return BICYCL_OK;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    return BICYCL_ERR_CORE;
+  }
+}
+
+bicycl_status_t bicycl_qfi_from_bytes(
+    bicycl_context_t *ctx, const uint8_t *data, size_t len,
+    bicycl_qfi_t **out) {
+  clear_error(ctx);
+  if (ctx == nullptr || data == nullptr || out == nullptr) {
+    return BICYCL_ERR_NULL_PTR;
+  }
+  try {
+    BICYCL::Mpz a, b, c;
+    size_t offset = 0;
+    if (!mpz_from_binary(data, len, offset, a) ||
+        !mpz_from_binary(data, len, offset, b) ||
+        !mpz_from_binary(data, len, offset, c)) {
+      set_error(ctx, "malformed QFI binary data");
+      return BICYCL_ERR_PARSE;
+    }
+    if (offset != len) {
+      set_error(ctx, "trailing bytes in QFI binary data");
+      return BICYCL_ERR_PARSE;
+    }
+    *out = new bicycl_qfi_t(BICYCL::QFI(a, b, c, true));
+    return BICYCL_OK;
+  } catch (const std::bad_alloc &) {
+    set_error(ctx, "allocation failed");
+    *out = nullptr;
+    return BICYCL_ERR_ALLOCATION_FAILED;
+  } catch (const std::exception &e) {
+    set_error(ctx, e.what());
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  } catch (...) {
+    set_error(ctx, "unknown error");
+    *out = nullptr;
+    return BICYCL_ERR_CORE;
+  }
+}
+
 bicycl_status_t bicycl_qfi_equal(
     bicycl_context_t *ctx, const bicycl_qfi_t *a, const bicycl_qfi_t *b, int *out) {
   clear_error(ctx);

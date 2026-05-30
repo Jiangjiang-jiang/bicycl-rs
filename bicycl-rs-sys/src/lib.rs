@@ -253,6 +253,20 @@ unsafe extern "C" {
         inout_len: *mut usize,
     ) -> bicycl_status_t;
 
+    pub fn bicycl_qfi_to_bytes(
+        ctx: *mut bicycl_context_t,
+        qfi: *const bicycl_qfi_t,
+        out_buf: *mut u8,
+        inout_len: *mut usize,
+    ) -> bicycl_status_t;
+
+    pub fn bicycl_qfi_from_bytes(
+        ctx: *mut bicycl_context_t,
+        data: *const u8,
+        len: usize,
+        out: *mut *mut bicycl_qfi_t,
+    ) -> bicycl_status_t;
+
     pub fn bicycl_qfi_equal(
         ctx: *mut bicycl_context_t,
         a: *const bicycl_qfi_t,
